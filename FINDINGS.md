@@ -260,6 +260,96 @@ author wrote. Some of this gap is two humans disagreeing about what "COMPLEX" me
 rather than classifier error. n=32 per class. This is a directional finding from one
 homelab, not a benchmark result about the model.
 
+### F-8. End-to-end latency, with ground-truth per-request isolation (B-5R)
+
+A shared single-slot homelab makes latency measurement its own methodology problem. The
+first attempt (B-5) measured all three real-model arms with cross-tenant contamination
+present; a post-hoc heuristic (tokens/sec clustering) salvaged a directional read, but it
+was explicitly labelled "likely-uncontended," not proof, and its p99s (n=20–31) were
+withdrawn as statistically meaningless at that sample size.
+
+**B-5R replaced inference with proof.** Before and after every individual request, both
+backends' own llama.cpp `/metrics` counters are snapshotted and reconciled against that
+request's own response `usage` — if the backend generated more tokens than our request
+asked for, someone else's generation landed in the window, full stop, not inferred from
+timing. Requests are sampled until 40 **ground-truth-verified isolated** observations are
+collected per arm; contaminated attempts are kept as a separate `shared_load` population,
+never averaged in.
+
+With the contending tenant paused, isolation was immediate: 120/127 attempts landed
+isolated on the first try (7 `always-large` attempts were genuinely shared_load and are
+kept, not discarded).
+
+| Arm | p50 | p90 | p99 | n |
+|---|---:|---:|---:|---:|
+| always-large (284B, everything) | 8.40s | 9.26s | 10.49s | 40 |
+| always-small (27B, everything) | 8.04s | 10.40s | 11.81s | 40 |
+| **classified** | **7.13s** | 8.99s | 10.43s | 40 |
+
+**This overturns the heuristic reading, and that is the point of doing it properly.** The
+salvage had suggested a wide always-large/always-small gap (12.2s vs 7.6s); with genuine
+contamination fully removed, the two are close (8.40s vs 8.04s) — most of that earlier gap
+was itself residual contamination the heuristic could not fully separate out.
+`classified` beats both pure strategies on median, plausibly because natural early-stopping
+on easy prompts (fewer than the max generation length) pulls its distribution down in a way
+neither single-model arm experiences on its own.
+
+**This is a latency result, not yet "the payoff."** Whether the ~35% of traffic
+`classified` sends to the large model *needed* to go there is a quality question, not a
+latency one — see F-9.
+
+A real bug was caught and fixed en route: llama.cpp's `prompt_tokens_total` counts only
+newly-evaluated (non-cached) prompt tokens, while OpenAI-style `usage.prompt_tokens`
+reports the full prompt length. Comparing against the raw `usage` field misclassified every
+`always-small` request as contaminated (a repeated chat-template prefix produced
+`cached_tokens=42` every time). Fixed to compare against `usage.prompt_tokens - cached_tokens`.
+
+### F-9. Model-affinity: does the cheap model actually succeed? (independent of the label)
+
+F-7 measured agreement between the classifier's label and a human-authored tier→cluster
+mapping (77.3%). That is not the same claim as "the small model would have failed 22.7% of
+the time" — a prompt labelled COMPLEX that the small model answers perfectly is not a
+routing error, and the reverse can be true too. This experiment asks both real backends
+every frozen prompt, judges both answers blind, and defines the routing target as the
+cheapest model that meets the quality bar — no human opinion about "COMPLEX" involved.
+
+**Actual model-selection accuracy: 78.6%** (n=118) — landing almost exactly on the
+human-label figure. That is itself a finding: the fuzzy human labels, for all their
+framing-generalization limits (F-7), correlate about as well with real model outcomes as
+they do with the classifier's own label.
+
+| Metric | Value |
+|---|---:|
+| Under-routing / quality risk | 11.9% |
+| Over-routing / wasted capacity | 5.9% |
+| Neither model sufficient | 16.9% |
+| Achievable oracle small-share | 55.9% |
+
+**Two serious methodology problems surfaced and were fixed before trusting these numbers**
+(full account in `bench/affinity/ANALYSIS.md`): the judge's own output was unparseable 28%
+of the time (ds4 exhausting its budget in `reasoning_content` before emitting the verdict
+JSON), and the first-pass "neither model suffices" rate of 50.8% was **98% a token-budget
+truncation artifact** — 59/60 such outcomes had both responses hit the exact 512-token cap.
+Re-judging with a larger budget dropped that figure to 16.9% and shifted every downstream
+metric with it. A third, self-inflicted confound (stale control comparisons after the
+redo) was caught and fixed the same way.
+
+**A judge-reliability asymmetry survives all three fixes and is disclosed, not resolved.**
+The absolute per-response judgment (`meets_bar`) that every headline metric is built from is
+perfectly stable for the small model's response under a position swap (0% flip, n=23) but
+flips 65.2% of the time for the large model's response on identical, matched content. The
+relative pairwise judgment (`verdict`) is never used in any metric here for exactly this
+class of reason. Consequence: `over_routing_wasted_capacity` depends only on
+`small_meets_bar` and is trustworthy; `under_routing_quality_risk` and
+`achievable_oracle_small_share` depend on `large_meets_bar` for some cases and carry this
+caveat every time they are cited.
+
+**On real outcomes, not labels, the safety-biased mapping still wins.** Scoring the SAME
+classifier output under alternative label→cluster mappings: `MEDIUM→large` cuts the
+under-routing rate to 1.7% (from 11.9%) at a cost of 25.4% over-routing — the same
+qualitative conclusion F-7 reached from label-agreement data, now confirmed against what
+actually happens when the escalated prompts are answered for real.
+
 ---
 
 ## Honest limitations
@@ -272,3 +362,8 @@ homelab, not a benchmark result about the model.
   end-to-end concurrency was deliberately held at 1.
 * Routing accuracy rests on a 128-prompt set authored by the same person who assigned
   its labels.
+* The model-affinity judge is one model (`ds4-flash-0731`); its `meets_bar` judgment is
+  proven stable for the small model's response and proven unstable (65.2% position flip)
+  for the large model's response (F-9). Metrics depending on the latter carry that caveat.
+* n=118 for affinity (10/128 prompts excluded for unparseable judge output after one retry,
+  counted and disclosed, never silently dropped).
