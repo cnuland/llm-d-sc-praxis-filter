@@ -66,7 +66,7 @@ LARGE_MODEL = "ds4-flash-0731"
 
 MAX_TOKENS = 512
 TEMPERATURE = 0
-JUDGE_MAX_TOKENS = 400
+JUDGE_MAX_TOKENS = 900
 JUDGE_SUBSAMPLE_N = 32
 
 # Never printed, never written to any output file.
@@ -278,13 +278,26 @@ def judge_payload(prompt_text, resp1, resp2, model):
 
 
 def extract_json(text):
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
+    """Find the judge's JSON verdict, tolerating markdown fences and any
+    trailing prose the model appended after the object."""
+    if not text:
         return None
-    try:
-        return json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return None
+    # Strip ```json ... ``` / ``` ... ``` fences if present.
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    candidates = [fenced.group(1)] if fenced else []
+    # Greedy whole-string match, then a non-greedy fallback for trailing prose.
+    candidates += re.findall(r"\{.*\}", text, re.DOTALL)
+    m2 = re.search(r"\{.*?\}", text, re.DOTALL)
+    if m2:
+        candidates.append(m2.group(0))
+    for cand in candidates:
+        try:
+            parsed = json.loads(cand)
+            if isinstance(parsed, dict) and "verdict" in parsed:
+                return parsed
+        except json.JSONDecodeError:
+            continue
+    return None
 
 
 def run_judge(url, model, bearer, prompt_text, resp1, resp2, retries=2):
@@ -294,11 +307,20 @@ def run_judge(url, model, bearer, prompt_text, resp1, resp2, retries=2):
         )
         if data:
             choice = (data.get("choices") or [{}])[0]
-            content = (choice.get("message") or {}).get("content", "")
-            parsed = extract_json(content)
+            msg = choice.get("message") or {}
+            content = msg.get("content", "") or ""
+            reasoning = msg.get("reasoning_content", "") or ""
+            # ds4 sometimes exhausts its budget in reasoning_content and never
+            # emits the final answer in content (observed live: 36/128 primary
+            # judge calls returned HTTP 200 with an empty content field and
+            # the verdict JSON was in reasoning_content instead). Search
+            # content first, then reasoning_content, then the concatenation.
+            parsed = extract_json(content) or extract_json(reasoning) or extract_json(content + "\n" + reasoning)
             if parsed and "verdict" in parsed:
                 parsed["_wall_s"] = round(wall_s, 3)
                 parsed["_raw_status"] = status
+                parsed["_found_in"] = "content" if extract_json(content) else (
+                    "reasoning_content" if extract_json(reasoning) else "concatenation")
                 return parsed
         if attempt < retries:
             continue
@@ -560,7 +582,7 @@ def _summarize_controls():
     flips = 0
     for c in pos:
         p = primary_by_id.get(c["prompt_id"])
-        if not p:
+        if not p or "verdict" not in p or p.get("judge_failed"):
             continue
         primary_pref = "large" if ((p["verdict"] == "1") == p["order_swapped"]) else "small" if p["verdict"] in ("1", "2") else "tie"
         control_pref = "large" if ((c["verdict"] == "1") != p["order_swapped"]) else "small" if c["verdict"] in ("1", "2") else "tie"
@@ -570,15 +592,47 @@ def _summarize_controls():
     agree = 0
     for c in inter:
         p = primary_by_id.get(c["prompt_id"])
-        if not p:
+        if not p or "verdict" not in p or p.get("judge_failed"):
             continue
         primary_pref = "large" if ((p["verdict"] == "1") == p["order_swapped"]) else "small" if p["verdict"] in ("1", "2") else "tie"
         inter_pref = "large" if ((c["verdict"] == "1") == p["order_swapped"]) else "small" if c["verdict"] in ("1", "2") else "tie"
         if primary_pref == inter_pref:
             agree += 1
 
+    # meets_bar (absolute, per-response) vs verdict (relative, pairwise) under
+    # the SAME position-swap control. This distinction matters enormously:
+    # every headline metric is built from meets_bar, never from verdict. If
+    # verdict is unstable but meets_bar is not, the headline numbers survive
+    # a finding that would otherwise look disqualifying.
+    def small_large_bar(rec, swapped):
+        large_key, small_key = ("response_1", "response_2") if swapped else ("response_2", "response_1")
+        return rec.get(small_key, {}).get("meets_bar"), rec.get(large_key, {}).get("meets_bar")
+
+    bar_compared = bar_small_flips = bar_large_flips = 0
+    for c in pos:
+        p = primary_by_id.get(c["prompt_id"])
+        if not p or "verdict" not in p or p.get("judge_failed"):
+            continue
+        p_small_bar, p_large_bar = small_large_bar(p, p["order_swapped"])
+        c_small_bar, c_large_bar = small_large_bar(c, not p["order_swapped"])
+        bar_compared += 1
+        bar_small_flips += p_small_bar != c_small_bar
+        bar_large_flips += p_large_bar != c_large_bar
+
     return {
-        "position_bias": {"n": len(pos), "flip_rate": (flips / len(pos)) if pos else None},
+        "position_bias_verdict": {
+            "n": len(pos), "flip_rate": (flips / len(pos)) if pos else None,
+            "note": "verdict is a RELATIVE pairwise preference; classic position-bias literature "
+                    "predicts exactly this kind of instability for it. Not used in any headline metric.",
+        },
+        "position_bias_meets_bar": {
+            "n": bar_compared,
+            "small_flip_rate": (bar_small_flips / bar_compared) if bar_compared else None,
+            "large_flip_rate": (bar_large_flips / bar_compared) if bar_compared else None,
+            "note": "meets_bar is an ABSOLUTE per-response judgment and drives every headline metric "
+                    "in this summary. Report this rate, not the verdict flip rate, when asked whether "
+                    "the headline numbers are trustworthy.",
+        },
         "inter_judge": {"n": len(inter), "agreement_rate": (agree / len(inter)) if inter else None},
     }
 
@@ -592,8 +646,15 @@ def _print_summary(s):
         v = s.get(k)
         print("  %-38s %s" % (k, ("%.1f%%" % (100 * v)) if v is not None else "n/a"))
     c = s.get("controls", {})
-    pb, ij = c.get("position_bias", {}), c.get("inter_judge", {})
-    print("  judge position-bias flip rate     : %s (n=%s)" % (pb.get("flip_rate"), pb.get("n")))
+    pbv = c.get("position_bias_verdict", {})
+    pbb = c.get("position_bias_meets_bar", {})
+    ij = c.get("inter_judge", {})
+    print("  verdict position-bias flip rate   : %s (n=%s)  <- relative judgment; NOT used in any metric above"
+          % (pbv.get("flip_rate"), pbv.get("n")))
+    print("  meets_bar position-bias (small)   : %s (n=%s)  <- DRIVES every metric above"
+          % (pbb.get("small_flip_rate"), pbb.get("n")))
+    print("  meets_bar position-bias (large)   : %s (n=%s)  <- DRIVES every metric above"
+          % (pbb.get("large_flip_rate"), pbb.get("n")))
     print("  inter-judge agreement rate        : %s (n=%s)" % (ij.get("agreement_rate"), ij.get("n")))
 
 
