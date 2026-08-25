@@ -1,60 +1,60 @@
 {
-  "achievable_oracle_small_share": 0.4322033898305085,
-  "actual_model_selection_accuracy": 0.8793103448275862,
+  "achievable_oracle_small_share": 0.559322033898305,
+  "actual_model_selection_accuracy": 0.7857142857142857,
   "controls": {
     "inter_judge": {
-      "agreement_rate": 0.9259259259259259,
-      "n": 27
+      "agreement_rate": 0.9047619047619048,
+      "n": 21
     },
     "position_bias_meets_bar": {
-      "large_flip_rate": 0.07142857142857142,
-      "n": 14,
+      "large_flip_rate": 0.6521739130434783,
+      "n": 23,
       "note": "meets_bar is an ABSOLUTE per-response judgment and drives every headline metric in this summary. Report this rate, not the verdict flip rate, when asked whether the headline numbers are trustworthy.",
-      "small_flip_rate": 0.07142857142857142
+      "small_flip_rate": 0.0
     },
     "position_bias_verdict": {
-      "flip_rate": 0.7058823529411765,
-      "n": 17,
+      "flip_rate": 0.11538461538461539,
+      "n": 26,
       "note": "verdict is a RELATIVE pairwise preference; classic position-bias literature predicts exactly this kind of instability for it. Not used in any headline metric."
     }
   },
   "cost_table": {
     "MEDIUM->large (safety-biased)": {
       "L": {
-        "1": 0.17796610169491525,
-        "10": 0.2542372881355932,
-        "5": 0.211864406779661,
-        "50": 0.5932203389830508
+        "1": 0.2711864406779661,
+        "10": 0.423728813559322,
+        "5": 0.3389830508474576,
+        "50": 1.1016949152542372
       },
-      "over_rate": 0.1694915254237288,
-      "under_rate": 0.00847457627118644
+      "over_rate": 0.2542372881355932,
+      "under_rate": 0.01694915254237288
     },
     "MEDIUM->small (deployed)": {
       "L": {
-        "1": 0.05932203389830508,
-        "10": 0.4406779661016949,
-        "5": 0.2288135593220339,
-        "50": 2.1355932203389827
+        "1": 0.17796610169491525,
+        "10": 1.2457627118644068,
+        "5": 0.6525423728813559,
+        "50": 5.991525423728814
       },
-      "over_rate": 0.01694915254237288,
-      "under_rate": 0.0423728813559322
+      "over_rate": 0.059322033898305086,
+      "under_rate": 0.11864406779661017
     },
     "REASONING-only->large (cost-biased)": {
       "L": {
-        "1": 0.06779661016949153,
-        "10": 0.5254237288135593,
-        "5": 0.2711864406779661,
-        "50": 2.5593220338983054
+        "1": 0.2627118644067797,
+        "10": 2.0932203389830506,
+        "5": 1.076271186440678,
+        "50": 10.228813559322035
       },
-      "over_rate": 0.01694915254237288,
-      "under_rate": 0.05084745762711865
+      "over_rate": 0.059322033898305086,
+      "under_rate": 0.2033898305084746
     }
   },
   "exact_four_tier_accuracy": 0.6864406779661016,
   "human_tier_route_agreement": 0.7796610169491526,
   "n": 118,
-  "neither_model_suffices": 0.5084745762711864,
-  "over_routing_wasted_capacity": 0.01694915254237288,
-  "realized_classifier_small_share": 0.4152542372881356,
-  "under_routing_quality_risk": 0.0423728813559322
+  "neither_model_suffices": 0.1694915254237288,
+  "over_routing_wasted_capacity": 0.059322033898305086,
+  "realized_classifier_small_share": 0.5,
+  "under_routing_quality_risk": 0.11864406779661017
 }
