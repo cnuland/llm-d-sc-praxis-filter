@@ -43,20 +43,26 @@
 | Field | Value |
 | --- | --- |
 | Operator | single-operator homelab, unaudited |
-| Host CPU | Apple M4 Max |
-| Logical cores | 16 |
-| OS | macOS-26.6-arm64-arm-64bit |
-| Architecture | arm64 |
-| Python | CPython 3.11.11 |
-| Filter crate git sha | unavailable — repository has no commits yet |
-| llm-d-sc git sha | `821ec12983e2` — 1 untracked file(s) |
+| Host CPU | AMD RYZEN AI MAX+ 395 w/ Radeon 8060S |
+| Logical cores | 32 |
+| OS | Linux-6.12.0-142.el10.x86_64-x86_64-with-glibc2.34 |
+| Architecture | x86_64 |
+| Python | CPython 3.11.13 |
+| Filter crate git sha | unavailable — fatal: not a git repository (or any parent up to mount point /) Stopping at filesystem boundary (GIT_DISCOVERY |
+| llm-d-sc git sha | unavailable — not a directory |
 | Independent reproduction | **none** |
 
 Runs behind this document:
 
 | SPEC | Scenario | UTC | Topology | Concurrency | Warmup | Measured | JSON |
 | --- | --- | --- | --- | ---: | ---: | ---: | --- |
-| SELFTEST | `smoke` | 2026-08-24T23:21:38Z | local-loopback-stub-only | 1,4 | 100 | 400 | [`20260824T232138Z-18640-smoke.json`](results/20260824T232138Z-18640-smoke.json) |
+| B-1 | `b1` | 2026-08-24T23:48:09Z | local-loopback | 1,4,16 | 200 | 1000 | [`20260824T234744Z-75514-b1.json`](results/20260824T234744Z-75514-b1.json) |
+| B-2 | `b2` | 2026-08-24T23:48:52Z | local-loopback | 1 | 100 | 500 | [`20260824T234810Z-75602-b2.json`](results/20260824T234810Z-75602-b2.json) |
+| B-3 | `b3` | 2026-08-24T23:50:18Z | local-loopback | 1,4 | 100 | 300 | [`20260824T234853Z-75744-b3.json`](results/20260824T234853Z-75744-b3.json) |
+| B-4 | `b4` | 2026-08-24T23:50:20Z | local-loopback | 1 | 20 | 300 | [`20260824T235018Z-75925-b4.json`](results/20260824T235018Z-75925-b4.json) |
+| B-6 | `b6` | 2026-08-24T23:50:58Z | local-loopback | 1,4 | 50 | 300 | [`20260824T235020Z-75975-b6.json`](results/20260824T235020Z-75975-b6.json) |
+| B-7 | `b7c` | 2026-08-25T00:22:54Z | in-cluster-job | 1,4 | 200 | 1000 | [`b7c-incluster.json`](results/b7c-incluster.json) |
+| B-5 | `b5c` | 2026-08-25T02:09:27Z | in-cluster-job | 1 | 0 | 300 | [`b5c-incluster.json`](results/b5c-incluster.json) |
 
 **Held-out prompt set, leakage check.** `bench/prompts/check_leakage.py` compared every benchmark prompt against every classifier anchor in `complexity.json`, `cost.json` and `sensitivity.json`:
 
@@ -71,85 +77,859 @@ Runs behind this document:
 | Thresholds a leak would have tripped | {'content_containment': 0.75, 'content_jaccard': 0.6, 'full_containment': 0.8, 'full_jaccard': 0.6} |
 | Clean | True |
 
-## SELFTEST — Harness self-test against bench/stub_upstream.py. Not a filter measurement.
+## B-1 — Filter overhead at the proxy: baseline vs classified-miss vs classified-hit.
 
 Command:
 
 ```
-bench/harness.py --scenario smoke --target http://127.0.0.1:9101 --warmup 100 --measured 400 --concurrency 1,4 --topology local-loopback-stub-only --quiet
+/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b1 --target http://127.0.0.1:8081 --param baseline_url=http://127.0.0.1:8080 --warmup 200 --measured 1000 --concurrency 1,4,16 --topology local-loopback
 ```
 
-* Latencies here are loopback stub round trips and describe the harness, not the filter.
-* The stub's own counters are read over /__stats so each premise is verified server-side.
+* Upstream is a local instant-return stub, so the delta between arms is the filter and the fabric it sits on, not the backend.
+* Run locally (no cluster network): B-1 measures the filter, not the fabric.
+* The baseline and classified arms are separate Praxis listeners because SPEC §2.2 makes `router` and `llm_d_sc` mutually exclusive in one chain.
 
 | Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `selftest-miss@c1` | 1 | 0.125 ms | 0.163 ms | 0.176 ms | 0.228 ms | 0.498 ms | 6833.2 req/s | 0 |
-| `selftest-hit@c1` | 1 | 0.117 ms | 0.129 ms | 0.134 ms | 0.159 ms | 0.196 ms | 7352.4 req/s | 0 |
-| `selftest-miss@c4` | 4 | 0.316 ms | 0.528 ms | 0.643 ms | 0.955 ms | 1.075 ms | 11244.2 req/s | 0 |
-| `selftest-hit@c4` | 4 | 0.288 ms | 0.571 ms | 0.646 ms | 0.952 ms | 1.386 ms | 11465.2 req/s | 0 |
+| `baseline@c1` | 1 | 0.145 ms | 0.156 ms | 0.160 ms | 0.171 ms | 0.496 ms | 6149.8 req/s | 0 |
+| `classified-miss@c1` | 1 | 14.099 ms | 15.070 ms | 15.406 ms | 16.098 ms | 20.869 ms | 70.4 req/s | 0 |
+| `classified-hit@c1` | 1 | 0.215 ms | 0.229 ms | 0.234 ms | 0.248 ms | 0.557 ms | 4301.4 req/s | 0 |
+| `baseline@c4` | 4 | 0.298 ms | 0.463 ms | 0.502 ms | 0.619 ms | 0.797 ms | 11941.2 req/s | 0 |
+| `classified-miss@c4` | 4 | 15.616 ms | 18.095 ms | 18.933 ms | 21.241 ms | 25.577 ms | 249.0 req/s | 0 |
+| `classified-hit@c4` | 4 | 0.359 ms | 0.521 ms | 0.593 ms | 0.714 ms | 0.853 ms | 9840.2 req/s | 0 |
+| `baseline@c16` | 16 | 1.271 ms | 2.573 ms | 3.070 ms | 3.946 ms | 5.133 ms | 10968.0 req/s | 0 |
+| `classified-miss@c16` | 16 | 60.159 ms | 62.607 ms | 63.436 ms | 66.615 ms | 69.941 ms | 264.2 req/s | 0 |
+| `classified-hit@c16` | 16 | 1.560 ms | 2.675 ms | 3.033 ms | 4.209 ms | 5.720 ms | 9460.1 req/s | 0 |
+
+**Deltas.** Each cell is the arm's own figure with its difference from the `baseline` arm at the same concurrency in parentheses. The baseline arm and the classified arms differ in exactly one thing: whether `llm_d_sc` is in the chain.
+
+| Concurrency | Metric | `baseline` | `classified-hit` (delta) | `classified-miss` (delta) |
+| --- | --- | ---: | ---: | ---: |
+| 1 | p50 | 0.145 ms | 0.215 ms (+0.070 ms) | 14.099 ms (+13.954 ms) |
+| 1 | p90 | 0.156 ms | 0.229 ms (+0.073 ms) | 15.070 ms (+14.914 ms) |
+| 1 | p95 | 0.160 ms | 0.234 ms (+0.074 ms) | 15.406 ms (+15.245 ms) |
+| 1 | p99 | 0.171 ms | 0.248 ms (+0.077 ms) | 16.098 ms (+15.927 ms) |
+| 1 | max | 0.496 ms | 0.557 ms (+0.061 ms) | 20.869 ms (+20.373 ms) |
+| 4 | p50 | 0.298 ms | 0.359 ms (+0.061 ms) | 15.616 ms (+15.319 ms) |
+| 4 | p90 | 0.463 ms | 0.521 ms (+0.058 ms) | 18.095 ms (+17.632 ms) |
+| 4 | p95 | 0.502 ms | 0.593 ms (+0.092 ms) | 18.933 ms (+18.431 ms) |
+| 4 | p99 | 0.619 ms | 0.714 ms (+0.095 ms) | 21.241 ms (+20.622 ms) |
+| 4 | max | 0.797 ms | 0.853 ms (+0.056 ms) | 25.577 ms (+24.780 ms) |
+| 16 | p50 | 1.271 ms | 1.560 ms (+0.290 ms) | 60.159 ms (+58.889 ms) |
+| 16 | p90 | 2.573 ms | 2.675 ms (+0.102 ms) | 62.607 ms (+60.034 ms) |
+| 16 | p95 | 3.070 ms | 3.033 ms (-0.037 ms) | 63.436 ms (+60.367 ms) |
+| 16 | p99 | 3.946 ms | 4.209 ms (+0.263 ms) | 66.615 ms (+62.669 ms) |
+| 16 | max | 5.133 ms | 5.720 ms (+0.587 ms) | 69.941 ms (+64.807 ms) |
 
 **Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
 
 | Arm | Assertion | Result |
 | --- | --- | :---: |
-| `selftest-miss@c1` | `sample_count` | PASS |
-| `selftest-miss@c1` | `transport_errors_within_budget` | PASS |
-| `selftest-miss@c1` | `status_as_expected` | PASS |
-| `selftest-miss@c1` | `warmup_excluded_from_window` | PASS |
-| `selftest-miss@c1` | `percentiles_monotone` | PASS |
-| `selftest-miss@c1` | `miss_arm_keys_are_unique` | PASS |
-| `selftest-miss@c1` | `stub_saw_every_request` | PASS |
-| `selftest-miss@c1` | `stub_distinct_bodies_match_cache_mode` | PASS |
-| `selftest-miss@c1` | `provenance_headers_captured` | PASS |
-| `selftest-miss@c1` | `upstream_model_attribution_present` | PASS |
-| `selftest-hit@c1` | `sample_count` | PASS |
-| `selftest-hit@c1` | `transport_errors_within_budget` | PASS |
-| `selftest-hit@c1` | `status_as_expected` | PASS |
-| `selftest-hit@c1` | `warmup_excluded_from_window` | PASS |
-| `selftest-hit@c1` | `percentiles_monotone` | PASS |
-| `selftest-hit@c1` | `hit_arm_uses_one_key` | PASS |
-| `selftest-hit@c1` | `stub_saw_every_request` | PASS |
-| `selftest-hit@c1` | `stub_distinct_bodies_match_cache_mode` | PASS |
-| `selftest-hit@c1` | `provenance_headers_captured` | PASS |
-| `selftest-hit@c1` | `upstream_model_attribution_present` | PASS |
-| `selftest-miss@c4` | `sample_count` | PASS |
-| `selftest-miss@c4` | `transport_errors_within_budget` | PASS |
-| `selftest-miss@c4` | `status_as_expected` | PASS |
-| `selftest-miss@c4` | `warmup_excluded_from_window` | PASS |
-| `selftest-miss@c4` | `percentiles_monotone` | PASS |
-| `selftest-miss@c4` | `miss_arm_keys_are_unique` | PASS |
-| `selftest-miss@c4` | `stub_saw_every_request` | PASS |
-| `selftest-miss@c4` | `stub_distinct_bodies_match_cache_mode` | PASS |
-| `selftest-miss@c4` | `provenance_headers_captured` | PASS |
-| `selftest-miss@c4` | `upstream_model_attribution_present` | PASS |
-| `selftest-hit@c4` | `sample_count` | PASS |
-| `selftest-hit@c4` | `transport_errors_within_budget` | PASS |
-| `selftest-hit@c4` | `status_as_expected` | PASS |
-| `selftest-hit@c4` | `warmup_excluded_from_window` | PASS |
-| `selftest-hit@c4` | `percentiles_monotone` | PASS |
-| `selftest-hit@c4` | `hit_arm_uses_one_key` | PASS |
-| `selftest-hit@c4` | `stub_saw_every_request` | PASS |
-| `selftest-hit@c4` | `stub_distinct_bodies_match_cache_mode` | PASS |
-| `selftest-hit@c4` | `provenance_headers_captured` | PASS |
-| `selftest-hit@c4` | `upstream_model_attribution_present` | PASS |
+| `baseline@c1` | `sample_count` | PASS |
+| `baseline@c1` | `transport_errors_within_budget` | PASS |
+| `baseline@c1` | `status_as_expected` | PASS |
+| `baseline@c1` | `warmup_excluded_from_window` | PASS |
+| `baseline@c1` | `percentiles_monotone` | PASS |
+| `baseline@c1` | `baseline_is_unclassified` | PASS |
+| `classified-miss@c1` | `sample_count` | PASS |
+| `classified-miss@c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@c1` | `status_as_expected` | PASS |
+| `classified-miss@c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@c1` | `percentiles_monotone` | PASS |
+| `classified-miss@c1` | `classification_observed` | PASS |
+| `classified-miss@c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c1` | `baseline_arm_present_for_delta` | PASS |
+| `classified-hit@c1` | `sample_count` | PASS |
+| `classified-hit@c1` | `transport_errors_within_budget` | PASS |
+| `classified-hit@c1` | `status_as_expected` | PASS |
+| `classified-hit@c1` | `warmup_excluded_from_window` | PASS |
+| `classified-hit@c1` | `percentiles_monotone` | PASS |
+| `classified-hit@c1` | `classification_observed` | PASS |
+| `classified-hit@c1` | `hit_arm_uses_one_key` | PASS |
+| `classified-hit@c1` | `hit_is_dramatically_cheaper_than_miss` | PASS |
+| `baseline@c4` | `sample_count` | PASS |
+| `baseline@c4` | `transport_errors_within_budget` | PASS |
+| `baseline@c4` | `status_as_expected` | PASS |
+| `baseline@c4` | `warmup_excluded_from_window` | PASS |
+| `baseline@c4` | `percentiles_monotone` | PASS |
+| `baseline@c4` | `baseline_is_unclassified` | PASS |
+| `classified-miss@c4` | `sample_count` | PASS |
+| `classified-miss@c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@c4` | `status_as_expected` | PASS |
+| `classified-miss@c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@c4` | `percentiles_monotone` | PASS |
+| `classified-miss@c4` | `classification_observed` | PASS |
+| `classified-miss@c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c4` | `baseline_arm_present_for_delta` | PASS |
+| `classified-hit@c4` | `sample_count` | PASS |
+| `classified-hit@c4` | `transport_errors_within_budget` | PASS |
+| `classified-hit@c4` | `status_as_expected` | PASS |
+| `classified-hit@c4` | `warmup_excluded_from_window` | PASS |
+| `classified-hit@c4` | `percentiles_monotone` | PASS |
+| `classified-hit@c4` | `classification_observed` | PASS |
+| `classified-hit@c4` | `hit_arm_uses_one_key` | PASS |
+| `classified-hit@c4` | `hit_is_dramatically_cheaper_than_miss` | PASS |
+| `baseline@c16` | `sample_count` | PASS |
+| `baseline@c16` | `transport_errors_within_budget` | PASS |
+| `baseline@c16` | `status_as_expected` | PASS |
+| `baseline@c16` | `warmup_excluded_from_window` | PASS |
+| `baseline@c16` | `percentiles_monotone` | PASS |
+| `baseline@c16` | `baseline_is_unclassified` | PASS |
+| `classified-miss@c16` | `sample_count` | PASS |
+| `classified-miss@c16` | `transport_errors_within_budget` | PASS |
+| `classified-miss@c16` | `status_as_expected` | PASS |
+| `classified-miss@c16` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@c16` | `percentiles_monotone` | PASS |
+| `classified-miss@c16` | `classification_observed` | PASS |
+| `classified-miss@c16` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@c16` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c16` | `baseline_arm_present_for_delta` | PASS |
+| `classified-hit@c16` | `sample_count` | PASS |
+| `classified-hit@c16` | `transport_errors_within_budget` | PASS |
+| `classified-hit@c16` | `status_as_expected` | PASS |
+| `classified-hit@c16` | `warmup_excluded_from_window` | PASS |
+| `classified-hit@c16` | `percentiles_monotone` | PASS |
+| `classified-hit@c16` | `classification_observed` | PASS |
+| `classified-hit@c16` | `hit_arm_uses_one_key` | PASS |
+| `classified-hit@c16` | `hit_is_dramatically_cheaper_than_miss` | PASS |
 
 ### What this says
 
-* **These are not results.** This scenario drives `bench/stub_upstream.py` directly and measures Python's HTTP client talking to Python's HTTP server on loopback. It exists to prove the harness: that the closed-loop driver sends exactly the work it claims, that warmup is excluded, that cache-key discipline holds at both ends of the socket, that provenance headers are captured intact, and that the percentile reduction and manifest emission work.
-* No number in this section describes the `llm_d_sc` filter.
+* At c1, a classification that hits llm-d-sc's cache adds **+0.070 ms** to p50 and a cache miss adds **+13.954 ms** (baseline p50 0.145 ms, hit 0.215 ms, miss 14.099 ms). The gap between the two is what the cache is worth on this path.
+* At c16, a classification that hits llm-d-sc's cache adds **+0.290 ms** to p50 and a cache miss adds **+58.889 ms** (baseline p50 1.271 ms, hit 1.560 ms, miss 60.159 ms). The gap between the two is what the cache is worth on this path.
+* At c4, a classification that hits llm-d-sc's cache adds **+0.061 ms** to p50 and a cache miss adds **+15.319 ms** (baseline p50 0.298 ms, hit 0.359 ms, miss 15.616 ms). The gap between the two is what the cache is worth on this path.
 
-## Not yet measured
+The hit and miss arms differ only in whether the prompt repeats, and the harness asserts that discipline from the request keys, so the difference between them is the cache and nothing else.
 
-Stated explicitly, because an absent scenario is easy to mistake for a scenario that found nothing.
+## B-2 — Body-size sensitivity: the cost of StreamBuffer whole-body buffering.
 
-* **B-1** — filter overhead at the proxy. No run JSON exists in `bench/results/`.
-* **B-2** — body-size sensitivity of `StreamBuffer`. No run JSON exists in `bench/results/`.
-* **B-3** — prompt-length sensitivity. No run JSON exists in `bench/results/`.
-* **B-4** — routing correctness over the held-out set. No run JSON exists in `bench/results/`.
-* **B-5** — end-to-end payoff against the real models. No run JSON exists in `bench/results/`.
-* **B-6** — degradation and failure. No run JSON exists in `bench/results/`.
-* **B-7** — in-cluster topology. No run JSON exists in `bench/results/`.
+Command:
+
+```
+/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b2 --target http://127.0.0.1:8081 --param baseline_url=http://127.0.0.1:8080 --warmup 100 --measured 500 --concurrency 1 --topology local-loopback
+```
+
+* The prompt length is held constant across every size; only the surrounding JSON grows.
+* SPEC §4.2 defaults max_body_bytes to 1 MiB, so the 1 MB arm sits at the configured ceiling. A body above it is answered 413 by design and is not part of this sweep.
+
+| Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `baseline@1KB` | 1 | 0.152 ms | 0.173 ms | 0.189 ms | 0.249 ms | 0.544 ms | 5618.1 req/s | 0 |
+| `classified@1KB` | 1 | 14.404 ms | 15.660 ms | 16.086 ms | 16.879 ms | 26.455 ms | 68.3 req/s | 0 |
+| `baseline@8KB` | 1 | 0.164 ms | 0.182 ms | 0.195 ms | 0.226 ms | 0.258 ms | 5000.1 req/s | 0 |
+| `classified@8KB` | 1 | 14.447 ms | 15.323 ms | 15.698 ms | 16.199 ms | 17.141 ms | 68.6 req/s | 0 |
+| `baseline@64KB` | 1 | 0.213 ms | 0.230 ms | 0.239 ms | 0.269 ms | 0.422 ms | 3056.3 req/s | 0 |
+| `classified@64KB` | 1 | 14.502 ms | 15.497 ms | 16.028 ms | 17.300 ms | 27.010 ms | 67.7 req/s | 0 |
+| `baseline@256KB` | 1 | 0.475 ms | 0.494 ms | 0.505 ms | 0.561 ms | 1.133 ms | 1175.4 req/s | 0 |
+| `classified@256KB` | 1 | 14.846 ms | 16.164 ms | 16.443 ms | 16.899 ms | 28.635 ms | 64.6 req/s | 0 |
+| `baseline@1MB` | 1 | 1.296 ms | 1.325 ms | 1.334 ms | 1.365 ms | 1.503 ms | 371.5 req/s | 0 |
+| `classified@1MB` | 1 | 15.417 ms | 16.349 ms | 16.689 ms | 17.653 ms | 21.273 ms | 59.0 req/s | 0 |
+
+**Deltas by body size.** The prompt is byte-identical across every size, so the difference between the arms at each size is the cost of `StreamBuffer` draining the whole body before routing.
+
+| Body size | Metric | `baseline` | `classified` (delta) |
+| --- | --- | ---: | ---: |
+| 1 KB | p50 | 0.152 ms | 14.404 ms (+14.253 ms) |
+| 1 KB | p90 | 0.173 ms | 15.660 ms (+15.486 ms) |
+| 1 KB | p95 | 0.189 ms | 16.086 ms (+15.897 ms) |
+| 1 KB | p99 | 0.249 ms | 16.879 ms (+16.630 ms) |
+| 1 KB | max | 0.544 ms | 26.455 ms (+25.911 ms) |
+| 1 MB | p50 | 1.296 ms | 15.417 ms (+14.122 ms) |
+| 1 MB | p90 | 1.325 ms | 16.349 ms (+15.024 ms) |
+| 1 MB | p95 | 1.334 ms | 16.689 ms (+15.355 ms) |
+| 1 MB | p99 | 1.365 ms | 17.653 ms (+16.288 ms) |
+| 1 MB | max | 1.503 ms | 21.273 ms (+19.771 ms) |
+| 256 KB | p50 | 0.475 ms | 14.846 ms (+14.371 ms) |
+| 256 KB | p90 | 0.494 ms | 16.164 ms (+15.670 ms) |
+| 256 KB | p95 | 0.505 ms | 16.443 ms (+15.939 ms) |
+| 256 KB | p99 | 0.561 ms | 16.899 ms (+16.338 ms) |
+| 256 KB | max | 1.133 ms | 28.635 ms (+27.501 ms) |
+| 64 KB | p50 | 0.213 ms | 14.502 ms (+14.289 ms) |
+| 64 KB | p90 | 0.230 ms | 15.497 ms (+15.266 ms) |
+| 64 KB | p95 | 0.239 ms | 16.028 ms (+15.789 ms) |
+| 64 KB | p99 | 0.269 ms | 17.300 ms (+17.031 ms) |
+| 64 KB | max | 0.422 ms | 27.010 ms (+26.588 ms) |
+| 8 KB | p50 | 0.164 ms | 14.447 ms (+14.283 ms) |
+| 8 KB | p90 | 0.182 ms | 15.323 ms (+15.141 ms) |
+| 8 KB | p95 | 0.195 ms | 15.698 ms (+15.504 ms) |
+| 8 KB | p99 | 0.226 ms | 16.199 ms (+15.972 ms) |
+| 8 KB | max | 0.258 ms | 17.141 ms (+16.883 ms) |
+
+**Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
+
+| Arm | Assertion | Result |
+| --- | --- | :---: |
+| `baseline@1KB` | `sample_count` | PASS |
+| `baseline@1KB` | `transport_errors_within_budget` | PASS |
+| `baseline@1KB` | `status_as_expected` | PASS |
+| `baseline@1KB` | `warmup_excluded_from_window` | PASS |
+| `baseline@1KB` | `percentiles_monotone` | PASS |
+| `baseline@1KB` | `baseline_is_unclassified` | PASS |
+| `baseline@1KB` | `body_size_as_intended` | PASS |
+| `classified@1KB` | `sample_count` | PASS |
+| `classified@1KB` | `transport_errors_within_budget` | PASS |
+| `classified@1KB` | `status_as_expected` | PASS |
+| `classified@1KB` | `warmup_excluded_from_window` | PASS |
+| `classified@1KB` | `percentiles_monotone` | PASS |
+| `classified@1KB` | `classification_observed` | PASS |
+| `classified@1KB` | `miss_arm_keys_are_unique` | PASS |
+| `classified@1KB` | `body_size_as_intended` | PASS |
+| `classified@1KB` | `no_cross_arm_key_reuse` | PASS |
+| `classified@1KB` | `prompt_held_constant_across_sizes` | PASS |
+| `baseline@8KB` | `sample_count` | PASS |
+| `baseline@8KB` | `transport_errors_within_budget` | PASS |
+| `baseline@8KB` | `status_as_expected` | PASS |
+| `baseline@8KB` | `warmup_excluded_from_window` | PASS |
+| `baseline@8KB` | `percentiles_monotone` | PASS |
+| `baseline@8KB` | `baseline_is_unclassified` | PASS |
+| `baseline@8KB` | `body_size_as_intended` | PASS |
+| `classified@8KB` | `sample_count` | PASS |
+| `classified@8KB` | `transport_errors_within_budget` | PASS |
+| `classified@8KB` | `status_as_expected` | PASS |
+| `classified@8KB` | `warmup_excluded_from_window` | PASS |
+| `classified@8KB` | `percentiles_monotone` | PASS |
+| `classified@8KB` | `classification_observed` | PASS |
+| `classified@8KB` | `miss_arm_keys_are_unique` | PASS |
+| `classified@8KB` | `body_size_as_intended` | PASS |
+| `classified@8KB` | `no_cross_arm_key_reuse` | PASS |
+| `classified@8KB` | `prompt_held_constant_across_sizes` | PASS |
+| `baseline@64KB` | `sample_count` | PASS |
+| `baseline@64KB` | `transport_errors_within_budget` | PASS |
+| `baseline@64KB` | `status_as_expected` | PASS |
+| `baseline@64KB` | `warmup_excluded_from_window` | PASS |
+| `baseline@64KB` | `percentiles_monotone` | PASS |
+| `baseline@64KB` | `baseline_is_unclassified` | PASS |
+| `baseline@64KB` | `body_size_as_intended` | PASS |
+| `classified@64KB` | `sample_count` | PASS |
+| `classified@64KB` | `transport_errors_within_budget` | PASS |
+| `classified@64KB` | `status_as_expected` | PASS |
+| `classified@64KB` | `warmup_excluded_from_window` | PASS |
+| `classified@64KB` | `percentiles_monotone` | PASS |
+| `classified@64KB` | `classification_observed` | PASS |
+| `classified@64KB` | `miss_arm_keys_are_unique` | PASS |
+| `classified@64KB` | `body_size_as_intended` | PASS |
+| `classified@64KB` | `no_cross_arm_key_reuse` | PASS |
+| `classified@64KB` | `prompt_held_constant_across_sizes` | PASS |
+| `baseline@256KB` | `sample_count` | PASS |
+| `baseline@256KB` | `transport_errors_within_budget` | PASS |
+| `baseline@256KB` | `status_as_expected` | PASS |
+| `baseline@256KB` | `warmup_excluded_from_window` | PASS |
+| `baseline@256KB` | `percentiles_monotone` | PASS |
+| `baseline@256KB` | `baseline_is_unclassified` | PASS |
+| `baseline@256KB` | `body_size_as_intended` | PASS |
+| `classified@256KB` | `sample_count` | PASS |
+| `classified@256KB` | `transport_errors_within_budget` | PASS |
+| `classified@256KB` | `status_as_expected` | PASS |
+| `classified@256KB` | `warmup_excluded_from_window` | PASS |
+| `classified@256KB` | `percentiles_monotone` | PASS |
+| `classified@256KB` | `classification_observed` | PASS |
+| `classified@256KB` | `miss_arm_keys_are_unique` | PASS |
+| `classified@256KB` | `body_size_as_intended` | PASS |
+| `classified@256KB` | `no_cross_arm_key_reuse` | PASS |
+| `classified@256KB` | `prompt_held_constant_across_sizes` | PASS |
+| `baseline@1MB` | `sample_count` | PASS |
+| `baseline@1MB` | `transport_errors_within_budget` | PASS |
+| `baseline@1MB` | `status_as_expected` | PASS |
+| `baseline@1MB` | `warmup_excluded_from_window` | PASS |
+| `baseline@1MB` | `percentiles_monotone` | PASS |
+| `baseline@1MB` | `baseline_is_unclassified` | PASS |
+| `baseline@1MB` | `body_size_as_intended` | PASS |
+| `classified@1MB` | `sample_count` | PASS |
+| `classified@1MB` | `transport_errors_within_budget` | PASS |
+| `classified@1MB` | `status_as_expected` | PASS |
+| `classified@1MB` | `warmup_excluded_from_window` | PASS |
+| `classified@1MB` | `percentiles_monotone` | PASS |
+| `classified@1MB` | `classification_observed` | PASS |
+| `classified@1MB` | `miss_arm_keys_are_unique` | PASS |
+| `classified@1MB` | `body_size_as_intended` | PASS |
+| `classified@1MB` | `no_cross_arm_key_reuse` | PASS |
+| `classified@1MB` | `prompt_held_constant_across_sizes` | PASS |
+
+### What this says
+
+* At a 1 KB body, buffering costs **+14.253 ms** at p50 (0.152 ms to 14.404 ms).
+* At a 8 KB body, buffering costs **+14.283 ms** at p50 (0.164 ms to 14.447 ms).
+* At a 64 KB body, buffering costs **+14.289 ms** at p50 (0.213 ms to 14.502 ms).
+* At a 256 KB body, buffering costs **+14.371 ms** at p50 (0.475 ms to 14.846 ms).
+* At a 1 MB body, buffering costs **+14.122 ms** at p50 (1.296 ms to 15.417 ms).
+
+Across the sweep the buffering cost moves from +14.253 ms at 1 KB to +14.122 ms at 1 MB. Whether that is acceptable is a deployment decision about `max_body_bytes`, not a property of the filter.
+
+## B-3 — Prompt-length sensitivity at 32/64/128/256/512 tokens, cache-miss.
+
+Command:
+
+```
+/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b3 --target http://127.0.0.1:8081 --warmup 100 --measured 300 --concurrency 1,4 --topology local-loopback
+```
+
+* Lengths mirror llm-d-sc's own performance table so the two are directly comparable.
+* Token counts are approximate (one bank word treated as one token); the records file carries actual word and character counts.
+* SPEC §4.2 truncates the classified text at max_prompt_chars (default 4096). The 512-token arm sits well inside that, so no arm here is silently truncated.
+
+| Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `classified-miss@32tok-c1` | 1 | 14.727 ms | 16.015 ms | 16.298 ms | 16.760 ms | 16.928 ms | 67.0 req/s | 0 |
+| `classified-miss@64tok-c1` | 1 | 18.658 ms | 19.628 ms | 20.255 ms | 21.190 ms | 24.406 ms | 53.1 req/s | 0 |
+| `classified-miss@128tok-c1` | 1 | 38.612 ms | 40.450 ms | 41.404 ms | 43.773 ms | 47.281 ms | 25.8 req/s | 0 |
+| `classified-miss@256tok-c1` | 1 | 52.968 ms | 55.389 ms | 56.320 ms | 63.034 ms | 68.985 ms | 18.7 req/s | 0 |
+| `classified-miss@512tok-c1` | 1 | 53.092 ms | 56.516 ms | 57.530 ms | 60.539 ms | 64.116 ms | 18.6 req/s | 0 |
+| `classified-miss@32tok-c4` | 4 | 16.301 ms | 17.452 ms | 17.848 ms | 19.195 ms | 22.004 ms | 242.2 req/s | 0 |
+| `classified-miss@64tok-c4` | 4 | 21.475 ms | 22.748 ms | 23.062 ms | 24.061 ms | 24.971 ms | 185.4 req/s | 0 |
+| `classified-miss@128tok-c4` | 4 | 40.312 ms | 42.110 ms | 42.809 ms | 44.496 ms | 45.648 ms | 98.8 req/s | 0 |
+| `classified-miss@256tok-c4` | 4 | 61.829 ms | 64.360 ms | 66.206 ms | 68.347 ms | 71.477 ms | 64.4 req/s | 0 |
+| `classified-miss@512tok-c4` | 4 | 62.442 ms | 65.781 ms | 66.761 ms | 68.863 ms | 70.285 ms | 63.6 req/s | 0 |
+
+**Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
+
+| Arm | Assertion | Result |
+| --- | --- | :---: |
+| `classified-miss@32tok-c1` | `sample_count` | PASS |
+| `classified-miss@32tok-c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@32tok-c1` | `status_as_expected` | PASS |
+| `classified-miss@32tok-c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@32tok-c1` | `percentiles_monotone` | PASS |
+| `classified-miss@32tok-c1` | `classification_observed` | PASS |
+| `classified-miss@32tok-c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@32tok-c1` | `prompt_length_as_intended` | PASS |
+| `classified-miss@32tok-c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@64tok-c1` | `sample_count` | PASS |
+| `classified-miss@64tok-c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@64tok-c1` | `status_as_expected` | PASS |
+| `classified-miss@64tok-c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@64tok-c1` | `percentiles_monotone` | PASS |
+| `classified-miss@64tok-c1` | `classification_observed` | PASS |
+| `classified-miss@64tok-c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@64tok-c1` | `prompt_length_as_intended` | PASS |
+| `classified-miss@64tok-c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@128tok-c1` | `sample_count` | PASS |
+| `classified-miss@128tok-c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@128tok-c1` | `status_as_expected` | PASS |
+| `classified-miss@128tok-c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@128tok-c1` | `percentiles_monotone` | PASS |
+| `classified-miss@128tok-c1` | `classification_observed` | PASS |
+| `classified-miss@128tok-c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@128tok-c1` | `prompt_length_as_intended` | PASS |
+| `classified-miss@128tok-c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@256tok-c1` | `sample_count` | PASS |
+| `classified-miss@256tok-c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@256tok-c1` | `status_as_expected` | PASS |
+| `classified-miss@256tok-c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@256tok-c1` | `percentiles_monotone` | PASS |
+| `classified-miss@256tok-c1` | `classification_observed` | PASS |
+| `classified-miss@256tok-c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@256tok-c1` | `prompt_length_as_intended` | PASS |
+| `classified-miss@256tok-c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@512tok-c1` | `sample_count` | PASS |
+| `classified-miss@512tok-c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@512tok-c1` | `status_as_expected` | PASS |
+| `classified-miss@512tok-c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@512tok-c1` | `percentiles_monotone` | PASS |
+| `classified-miss@512tok-c1` | `classification_observed` | PASS |
+| `classified-miss@512tok-c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@512tok-c1` | `prompt_length_as_intended` | PASS |
+| `classified-miss@512tok-c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@32tok-c4` | `sample_count` | PASS |
+| `classified-miss@32tok-c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@32tok-c4` | `status_as_expected` | PASS |
+| `classified-miss@32tok-c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@32tok-c4` | `percentiles_monotone` | PASS |
+| `classified-miss@32tok-c4` | `classification_observed` | PASS |
+| `classified-miss@32tok-c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@32tok-c4` | `prompt_length_as_intended` | PASS |
+| `classified-miss@32tok-c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@64tok-c4` | `sample_count` | PASS |
+| `classified-miss@64tok-c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@64tok-c4` | `status_as_expected` | PASS |
+| `classified-miss@64tok-c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@64tok-c4` | `percentiles_monotone` | PASS |
+| `classified-miss@64tok-c4` | `classification_observed` | PASS |
+| `classified-miss@64tok-c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@64tok-c4` | `prompt_length_as_intended` | PASS |
+| `classified-miss@64tok-c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@128tok-c4` | `sample_count` | PASS |
+| `classified-miss@128tok-c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@128tok-c4` | `status_as_expected` | PASS |
+| `classified-miss@128tok-c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@128tok-c4` | `percentiles_monotone` | PASS |
+| `classified-miss@128tok-c4` | `classification_observed` | PASS |
+| `classified-miss@128tok-c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@128tok-c4` | `prompt_length_as_intended` | PASS |
+| `classified-miss@128tok-c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@256tok-c4` | `sample_count` | PASS |
+| `classified-miss@256tok-c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@256tok-c4` | `status_as_expected` | PASS |
+| `classified-miss@256tok-c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@256tok-c4` | `percentiles_monotone` | PASS |
+| `classified-miss@256tok-c4` | `classification_observed` | PASS |
+| `classified-miss@256tok-c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@256tok-c4` | `prompt_length_as_intended` | PASS |
+| `classified-miss@256tok-c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@512tok-c4` | `sample_count` | PASS |
+| `classified-miss@512tok-c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@512tok-c4` | `status_as_expected` | PASS |
+| `classified-miss@512tok-c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@512tok-c4` | `percentiles_monotone` | PASS |
+| `classified-miss@512tok-c4` | `classification_observed` | PASS |
+| `classified-miss@512tok-c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@512tok-c4` | `prompt_length_as_intended` | PASS |
+| `classified-miss@512tok-c4` | `no_cross_arm_key_reuse` | PASS |
+
+### What this says
+
+* 32 tokens at concurrency 1: p50 14.727 ms, p99 16.760 ms, 67.0 req/s.
+* 64 tokens at concurrency 1: p50 18.658 ms, p99 21.190 ms, 53.1 req/s.
+* 128 tokens at concurrency 1: p50 38.612 ms, p99 43.773 ms, 25.8 req/s.
+* 256 tokens at concurrency 1: p50 52.968 ms, p99 63.034 ms, 18.7 req/s.
+* 512 tokens at concurrency 1: p50 53.092 ms, p99 60.539 ms, 18.6 req/s.
+* 32 tokens at concurrency 4: p50 16.301 ms, p99 19.195 ms, 242.2 req/s.
+* 64 tokens at concurrency 4: p50 21.475 ms, p99 24.061 ms, 185.4 req/s.
+* 128 tokens at concurrency 4: p50 40.312 ms, p99 44.496 ms, 98.8 req/s.
+* 256 tokens at concurrency 4: p50 61.829 ms, p99 68.347 ms, 64.4 req/s.
+* 512 tokens at concurrency 4: p50 62.442 ms, p99 68.863 ms, 63.6 req/s.
+
+These are directly comparable with llm-d-sc's own cache-miss table by construction — same lengths, same concurrencies, same percentile definition. The difference between the two tables is the gateway.
+
+## B-4 — Routing correctness over a held-out labelled prompt set: does the right prompt reach the right tier?
+
+Command:
+
+```
+/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b4 --target http://127.0.0.1:8081 --warmup 20 --concurrency 1 --topology local-loopback
+```
+
+* Prompt set is held out from the classifier anchors; leakage is asserted before the run builds its arms, not after the numbers exist.
+* Upstreams may be stubs: this measures the routing decision, not generation.
+* Attribution requires the upstream to echo x-llm-d-sc-* headers, and is cross-checked against the upstream's own response model field.
+
+| Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `routing-heldout` | 1 | 10.143 ms | 12.839 ms | 13.397 ms | 14.410 ms | 14.513 ms | 97.8 req/s | 0 |
+
+**Routing confusion matrix** — rows are the intended tier, columns are the cluster the request actually landed on.
+
+| Intended tier | `general` | `large` | `small` | `unattributed` | Row total |
+|---|---:|---:|---:|---:|---:|
+| **SIMPLE** | 0 | 0 | 32 | 0 | 32 |
+| **MEDIUM** | 0 | 1 | 31 | 0 | 32 |
+| **COMPLEX** | 0 | 16 | 16 | 0 | 32 |
+| **REASONING** | 0 | 20 | 12 | 0 | 32 |
+
+| Metric | Value |
+| --- | ---: |
+| Prompts routed | 128 |
+| Routed to the intended cluster | 99 |
+| Routing accuracy | 77.3% |
+
+Per-class precision and recall, computed on the label the classifier returned (not on the cluster), so they are comparable with llm-d-sc's own accuracy table:
+
+| Class | Support | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: |
+| `SIMPLE` | 32 | 0.7500 | 0.9375 | 0.8333 |
+| `MEDIUM` | 32 | 0.4510 | 0.7188 | 0.5542 |
+| `COMPLEX` | 32 | 1.0000 | 0.4688 | 0.6383 |
+| `REASONING` | 32 | 0.9091 | 0.6250 | 0.7407 |
+
+**The two misroute costs are not symmetric and are reported separately.** Sending a SIMPLE prompt to the 284 B model wastes capacity; sending a REASONING prompt to the 27 B model risks the answer.
+
+| Misroute | Count | Cost |
+| --- | ---: | --- |
+| SIMPLE reached the large model | 0 | wasted capacity |
+| MEDIUM reached the large model | 1 | wasted capacity |
+| COMPLEX reached the small model | 16 | quality risk |
+| REASONING reached the small model | 12 | quality risk |
+| Fell through to `general` | 0 | unrouted |
+
+Accuracy on the prompts deliberately authored to sit near a class boundary:
+
+| Set | n | Correct | Accuracy |
+| --- | ---: | ---: | ---: |
+| boundary-marked | 8 | 3 | 37.5% |
+
+**Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
+
+| Arm | Assertion | Result |
+| --- | --- | :---: |
+| `routing-heldout` | `sample_count` | PASS |
+| `routing-heldout` | `transport_errors_within_budget` | PASS |
+| `routing-heldout` | `status_as_expected` | PASS |
+| `routing-heldout` | `warmup_excluded_from_window` | PASS |
+| `routing-heldout` | `percentiles_monotone` | PASS |
+| `routing-heldout` | `classification_status_as_intended` | PASS |
+| `routing-heldout` | `attribution_sources_agree` | PASS |
+| `routing-heldout` | `every_request_attributed` | PASS |
+| `routing-heldout` | `warmup_did_not_prewarm_heldout_prompts` | PASS |
+| `routing-heldout` | `every_heldout_prompt_measured` | PASS |
+
+### What this says
+
+* 99 of 128 prompts reached their intended cluster (**77.3%** routing accuracy) on a set asserted to have zero verbatim overlap and zero near-duplicates against the classifier's anchors.
+* **Wasted capacity:** 0 SIMPLE and 1 MEDIUM prompts reached the large model. **Quality risk:** 16 COMPLEX and 12 REASONING prompts reached the small model. These are different failures with different costs and are not netted against each other.
+* On the 8 prompts deliberately authored to sit near a class boundary, accuracy was 37.5%. Boundary behaviour is where a routing taxonomy earns or loses its keep.
+
+## B-5 — End-to-end payoff against the real models, in-cluster: always-large vs always-small vs classified.
+
+Command:
+
+```
+/bench/bench/harness.py --scenario b5c --allow-homelab --concurrency 1 --topology in-cluster-job --warmup 0 --target http://praxis.praxis-poc.svc.cluster.local:8080 --param large_url=http://praxis-bench.praxis-poc.svc.cluster.local:8082 --param small_url=http://praxis-bench.praxis-poc.svc.cluster.local:8083 --param probe_url=http://praxis-bench.praxis-poc.svc.cluster.local:8084 --param metrics_url=http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics --param per_class=10 --param max_tokens=128 --param temperature=0 --param pause_s=30 --param praxis_overhead_p50_ms=0.144833 --param praxis_overhead_p99_ms=0.170873 --param praxis_floor_p50_ms=0.059352 --param praxis_floor_p99_ms=0.151946 --out /bench/bench/results/b5c-incluster.json
+```
+
+* Concurrency is fixed at 1 and enforced by the harness (SPEC-BENCH §3).
+* Generation settings are identical across all arms and recorded in the manifest; different settings between arms would invalidate the comparison entirely.
+* All three arms go through Praxis, so the proxy's cost is inside every column rather than only the classified one.
+* Arms pause between each other and each one waits for its backend to report itself idle before starting; both backends are single-slot llama.cpp servers on a shared home cluster.
+* The classify RTT is still not joinable per request: the filter sets x-llm-d-sc-latency-us on the upstream request and llama.cpp does not echo it back (verified live). It is measured two other ways instead -- a static_response probe arm, and Praxis's own summary -- and upstream_time remains the remainder, labelled as such.
+* Warmup is zero by design; a warmup request would seed llm-d-sc's cache for a measured prompt.
+
+| Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `classify-probe` | 1 | 17.210 ms | 18.027 ms | 18.825 ms | 19.898 ms | 19.898 ms | 53.3 req/s | 0 |
+| `always-large` | 1 | 12402.036 ms | 42356.594 ms | 76126.462 ms | 151231.516 ms | 151231.516 ms | 0.0 req/s | 0 |
+| `always-small` | 1 | 9041.136 ms | 94168.665 ms | 117289.954 ms | 134681.205 ms | 134681.205 ms | 0.0 req/s | 0 |
+| `classified` | 1 | 8651.045 ms | 112712.839 ms | 152285.590 ms | 205385.266 ms | 205385.266 ms | 0.0 req/s | 0 |
+
+**Time per output token, and tokens generated.** This is what the routing decision is actually spending or saving.
+
+| Arm | Tokens generated | TPOT p50 | TPOT p90 | TPOT p99 | TPOT max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `classify-probe` | 40 | 17.210 ms | 18.027 ms | 19.898 ms | 19.898 ms |
+| `always-large` | 5120 | 96.891 ms | 330.911 ms | 1181.496 ms | 1181.496 ms |
+| `always-small` | 4658 | 90.704 ms | 735.693 ms | 1052.197 ms | 1052.197 ms |
+| `classified` | 4654 | 67.915 ms | 1189.731 ms | 3366.972 ms | 3366.972 ms |
+
+* `classify-probe` responses by upstream model id: `b7-static` 40
+* `always-large` responses by upstream model id: `ds4-flash-0731` 40
+* `always-small` responses by upstream model id: `qwen38-27b` 40
+* `classified` responses by upstream model id: `ds4-flash-0731` 14, `qwen38-27b` 26
+
+**Latency decomposition.** `total_e2e = praxis_overhead + classify_rtt + upstream_time`, where `praxis_overhead` comes from B-1, `classify_rtt` from the `x-llm-d-sc-latency-us` header, and `upstream_time` is the remainder. Each share is the component divided by the total on the same row.
+
+| Quantile | Praxis overhead | Classify RTT | Upstream generation | Total |
+| --- | ---: | ---: | ---: | ---: |
+| p50 | n/a (n/a) | n/a (n/a) | n/a (n/a) | 8651.04 ms |
+| p99 | n/a (n/a) | n/a (n/a) | n/a (n/a) | 205385.27 ms |
+
+Stacked, one row per quantile. A component that is a non-zero but sub-percent share still gets one cell, so it stays visible rather than rounding away:
+
+```
+p50    8651.04 ms
+p99    205385.27 ms
+```
+
+Stack key: `#` praxis overhead · `=` classify RTT · `.` upstream generation.
+
+**Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
+
+| Arm | Assertion | Result |
+| --- | --- | :---: |
+| `classify-probe` | `sample_count` | PASS |
+| `classify-probe` | `transport_errors_within_budget` | PASS |
+| `classify-probe` | `status_as_expected` | PASS |
+| `classify-probe` | `warmup_excluded_from_window` | PASS |
+| `classify-probe` | `percentiles_monotone` | PASS |
+| `classify-probe` | `probe_arm_classified_every_request` | PASS |
+| `classify-probe` | `probe_arm_contacted_no_model` | PASS |
+| `always-large` | `sample_count` | PASS |
+| `always-large` | `transport_errors_within_budget` | PASS |
+| `always-large` | `status_as_expected` | PASS |
+| `always-large` | `warmup_excluded_from_window` | PASS |
+| `always-large` | `percentiles_monotone` | PASS |
+| `always-large` | `arm_reached_only_its_intended_backend` | PASS |
+| `always-large` | `arm_did_not_classify` | PASS |
+| `always-large` | `backend_served_only_this_arm[ds4-flash-0731]` | **FAIL** |
+| `always-large` | `generation_accounted` | PASS |
+| `always-large` | `generation_settings_identical_across_arms` | PASS |
+| `always-large` | `same_prompts_across_arms` | PASS |
+| `always-small` | `sample_count` | PASS |
+| `always-small` | `transport_errors_within_budget` | PASS |
+| `always-small` | `status_as_expected` | PASS |
+| `always-small` | `warmup_excluded_from_window` | PASS |
+| `always-small` | `percentiles_monotone` | PASS |
+| `always-small` | `arm_reached_only_its_intended_backend` | PASS |
+| `always-small` | `arm_did_not_classify` | PASS |
+| `always-small` | `backend_served_only_this_arm[qwen38-27b]` | **FAIL** |
+| `always-small` | `generation_accounted` | PASS |
+| `always-small` | `generation_settings_identical_across_arms` | PASS |
+| `always-small` | `same_prompts_across_arms` | PASS |
+| `classified` | `sample_count` | PASS |
+| `classified` | `transport_errors_within_budget` | PASS |
+| `classified` | `status_as_expected` | PASS |
+| `classified` | `warmup_excluded_from_window` | PASS |
+| `classified` | `percentiles_monotone` | PASS |
+| `classified` | `classification_observed` | PASS |
+| `classified` | `every_classification_succeeded` | PASS |
+| `classified` | `traffic_split_across_backends` | PASS |
+| `classified` | `backend_served_only_this_arm[qwen38-27b]` | **FAIL** |
+| `classified` | `backend_served_only_this_arm[ds4-flash-0731]` | **FAIL** |
+| `classified` | `generation_accounted` | PASS |
+| `classified` | `decomposition_components_are_measured_not_inferred` | PASS |
+| `classified` | `generation_settings_identical_across_arms` | PASS |
+| `classified` | `same_prompts_across_arms` | PASS |
+
+Failed assertions, in full:
+
+* `always-large` / `backend_served_only_this_arm[ds4-flash-0731]`: ds4-flash-0731 generated 9064 tokens during this arm; this harness asked for 5120 of them, leaving 3944 unaccounted (budget 256, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': True, 'waited_s': 595.0738966464996, 'consecutive_idle_samples': 3}
+* `always-small` / `backend_served_only_this_arm[qwen38-27b]`: qwen38-27b generated 19990 tokens during this arm; this harness asked for 4658 of them, leaving 15332 unaccounted (budget 233, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': False, 'reason': 'still busy after 902 s', 'waited_s': 901.9740536212921, 'last_busy_samples': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+* `classified` / `backend_served_only_this_arm[qwen38-27b]`: qwen38-27b generated 11702 tokens during this arm; this harness asked for 2862 of them, leaving 8840 unaccounted (budget 143, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': True, 'waited_s': 6.016313076019287, 'consecutive_idle_samples': 3}
+* `classified` / `backend_served_only_this_arm[ds4-flash-0731]`: ds4-flash-0731 generated 3388 tokens during this arm; this harness asked for 1792 of them, leaving 1596 unaccounted (budget 90, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': True, 'waited_s': 803.8825881481171, 'consecutive_idle_samples': 3}
+
+### What this says
+
+**This run did not verify its own premises, so its numbers are not evidence.** 4 assertion(s) failed, listed above. SPEC-BENCH §0 rule 3 treats that as a bug in the measurement, not as a result. The tables are reproduced so the failure is inspectable.
+
+## B-5R — Ground-truth isolated latency (supersedes B-5)
+
+B-5 above failed its own contamination assertions on all three real-model arms -- another tenant shared these single-slot backends during the run, and its numbers are not evidence. B-5R replaces inference with proof: before and after **every individual request**, both backends' own llama.cpp `/metrics` counters are snapshotted and reconciled against that request's own response `usage`. If the backend generated more tokens than our request asked for, someone else's generation landed in the window -- proven, not inferred from timing. Requests are sampled until 40 ground-truth-verified **isolated** observations are collected per arm; contaminated attempts are kept as a separate `shared_load` population, never averaged in.
+
+**p50/p90 are the numbers to cite. p99 at n=40 describes the tail of a small sample, not a stable 99th-percentile estimate** -- included below because the harness's percentile reducer is applied consistently everywhere, not because it should be read as precise.
+
+| Arm | p50 | p90 | isolated n | shared_load n (kept, excluded from percentiles) |
+| --- | ---: | ---: | ---: | ---: |
+| `always-large` | 8395.000 ms | 9257.000 ms | 40 | 7 |
+| `always-small` | 8036.000 ms | 10397.000 ms | 40 | 0 |
+| `classified` | 7132.000 ms | 8991.000 ms | 40 | 0 |
+
+**For context, the withdrawn heuristic salvage** (post-hoc tokens/sec clustering on the original contaminated run, before B-5R existed) is kept here rather than deleted, per the corrections policy below -- it is NOT ground truth and its p99 was already withdrawn as meaningless at n=20-31:
+
+| Arm | "likely-uncontended" p50 (heuristic, n<40) |
+| --- | ---: |
+| `always-large` | 12231.895 ms (n=31) |
+| `always-small` | 7634.686 ms (n=20) |
+| `classified` | 7838.051 ms (n=28) |
+
+### What this says
+
+With genuine contamination proven absent rather than inferred, `always-large` and `always-small` are close (8395.000 ms vs 8036.000 ms p50) -- **not** the wide gap the withdrawn heuristic suggested, which was itself mostly residual contamination the heuristic could not fully separate out. `classified` beats both pure strategies on median, plausibly from natural early-stopping on easy prompts pulling its distribution down in a way neither single-model arm experiences alone.
+
+**This is a latency result, not yet "the payoff."** Whether the traffic `classified` sends to the large model *needed* to go there is a quality question, answered separately (model-affinity, below) -- not a latency one.
+
+## B-6 — Degradation and failure: classifier down, classifier slow, queue exhausted, fail-closed.
+
+Command:
+
+```
+/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b6 --target http://127.0.0.1:8081 --param baseline_url=http://127.0.0.1:8080 --param down_url=http://127.0.0.1:8091 --param slow_url=http://127.0.0.1:8092 --param exhausted_url=http://127.0.0.1:8093 --param reject_url=http://127.0.0.1:8094 --param timeout_ms=100 --warmup 50 --measured 300 --concurrency 1,4 --topology local-loopback
+```
+
+* Upstreams are stubs. Only the classifier path is broken; the model path is not involved.
+* 'classifier down' is an unbound port and needs no server at all; 'classifier slow' is bench/stub_upstream.py --mode tcp-blackhole, which accepts TCP and then never speaks.
+* The queue-exhausted case requires a REAL local llm-d-sc so the bounded queue exists to be exhausted; a stub cannot produce a genuine RESOURCE_EXHAUSTED.
+
+| Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `classifier-down` | 1 | 0.186 ms | 0.275 ms | 0.292 ms | 0.320 ms | 0.325 ms | 4616.2 req/s | 0 |
+| `classifier-slow` | 1 | 104.039 ms | 104.991 ms | 105.212 ms | 105.822 ms | 107.496 ms | 9.6 req/s | 0 |
+| `queue-exhausted` | 300 | 430.194 ms | 872.811 ms | 932.190 ms | 976.974 ms | 981.351 ms | 306.4 req/s | 0 |
+| `fail-closed` | 1 | 0.107 ms | 0.145 ms | 0.147 ms | 0.159 ms | 0.175 ms | 5826.4 req/s | 0 |
+
+* `queue-exhausted` classification-status tally: `OK` 260, `RESOURCE_EXHAUSTED` 40
+
+**Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
+
+| Arm | Assertion | Result |
+| --- | --- | :---: |
+| `classifier-down` | `sample_count` | PASS |
+| `classifier-down` | `transport_errors_within_budget` | PASS |
+| `classifier-down` | `status_as_expected` | PASS |
+| `classifier-down` | `warmup_excluded_from_window` | PASS |
+| `classifier-down` | `percentiles_monotone` | PASS |
+| `classifier-down` | `fail_open_returned_200_for_every_request` | PASS |
+| `classifier-down` | `degraded_path_recorded_its_reason` | PASS |
+| `classifier-down` | `added_latency_is_connect_refused_not_the_full_timeout` | PASS |
+| `classifier-down` | `no_cross_arm_key_reuse` | PASS |
+| `classifier-slow` | `sample_count` | PASS |
+| `classifier-slow` | `transport_errors_within_budget` | PASS |
+| `classifier-slow` | `status_as_expected` | PASS |
+| `classifier-slow` | `warmup_excluded_from_window` | PASS |
+| `classifier-slow` | `percentiles_monotone` | PASS |
+| `classifier-slow` | `fail_open_returned_200_for_every_request` | PASS |
+| `classifier-slow` | `degraded_path_recorded_its_reason` | PASS |
+| `classifier-slow` | `added_latency_is_bounded_by_timeout_ms` | PASS |
+| `classifier-slow` | `no_cross_arm_key_reuse` | PASS |
+| `queue-exhausted` | `sample_count` | PASS |
+| `queue-exhausted` | `transport_errors_within_budget` | PASS |
+| `queue-exhausted` | `status_as_expected` | PASS |
+| `queue-exhausted` | `warmup_excluded_from_window` | PASS |
+| `queue-exhausted` | `percentiles_monotone` | PASS |
+| `queue-exhausted` | `fail_open_returned_200_for_every_request` | PASS |
+| `queue-exhausted` | `resource_exhausted_was_actually_provoked` | PASS |
+| `queue-exhausted` | `no_cross_arm_key_reuse` | PASS |
+| `fail-closed` | `sample_count` | PASS |
+| `fail-closed` | `transport_errors_within_budget` | PASS |
+| `fail-closed` | `status_as_expected` | PASS |
+| `fail-closed` | `warmup_excluded_from_window` | PASS |
+| `fail-closed` | `percentiles_monotone` | PASS |
+| `fail-closed` | `rejects_cleanly_with_the_configured_status` | PASS |
+| `fail-closed` | `no_hangs_on_the_reject_path` | PASS |
+| `fail-closed` | `no_cross_arm_key_reuse` | PASS |
+
+### What this says
+
+* `classifier-down`: p50 0.186 ms, p99 0.320 ms, 0 errors against an expected status of [200].
+* `classifier-slow`: p50 104.039 ms, p99 105.822 ms, 0 errors against an expected status of [200].
+* `queue-exhausted`: p50 430.194 ms, p99 976.974 ms, 0 errors against an expected status of [200].
+* `fail-closed`: p50 0.107 ms, p99 0.159 ms, 0 errors against an expected status of [503].
+
+The figure that matters here is the classifier-down p99. A fail-open path that still waits the full `timeout_ms` on every request has converted a classifier outage into a tax on every request — it is fail-open in name only. The assertion above is what holds that line.
+
+## B-7 — In-cluster topology: Praxis -> llm-d-sc across a ClusterIP Service under gateway concurrency.
+
+Command:
+
+```
+/bench/bench/harness.py --scenario b7c --target http://praxis-bench.praxis-poc.svc.cluster.local:8084 --param baseline_url=http://praxis-bench.praxis-poc.svc.cluster.local:8085 --param metrics_url=http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics --topology in-cluster-job --warmup 200 --measured 1000 --concurrency 1,4 --out /bench/bench/results/b7c-incluster.json
+```
+
+* Run from a Pod inside the cluster. A figure measured through oc port-forward is a measurement of the tunnel, not of the network.
+* The upstream is Praxis's own static_response filter, not a model endpoint: SPEC-BENCH §3 keeps a concurrency-16 sweep away from the single-replica homelab backends. Everything on the path being timed is real -- body buffer, extract, gRPC across the ClusterIP Service, and llm-d-sc's forward.
+* Classification is verified from Praxis's own llm_d_sc_classify_total counter, which must move by exactly the arm's request count on a classified arm and by exactly zero on a baseline arm. Response-header provenance is unavailable in-cluster because nothing echoes the upstream request headers back.
+* static_response answers without draining the request body, so each response closes the connection and every request pays a fresh TCP handshake. Both arms pay it identically, so the reported delta is unaffected; the absolute figures include it.
+* Percentiles are nearest-rank and warmup is excluded, matching llm-d-sc's own topology table so the rows are directly comparable rather than merely similar.
+
+| Arm | Concurrency | p50 | p90 | p95 | p99 | max | Throughput | Errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `baseline-miss@c1` | 1 | 0.059 ms | 0.085 ms | 0.099 ms | 0.152 ms | 0.320 ms | 1011.1 req/s | 0 |
+| `classified-miss@c1` | 1 | 21.035 ms | 21.688 ms | 22.084 ms | 23.394 ms | 24.619 ms | 44.5 req/s | 0 |
+| `baseline-hit@c1` | 1 | 0.055 ms | 0.069 ms | 0.080 ms | 0.133 ms | 0.215 ms | 1108.6 req/s | 0 |
+| `classified-hit@c1` | 1 | 0.115 ms | 0.158 ms | 0.168 ms | 0.215 ms | 41.679 ms | 986.1 req/s | 0 |
+| `baseline-miss@c4` | 4 | 0.075 ms | 0.113 ms | 0.143 ms | 0.197 ms | 0.435 ms | 3813.5 req/s | 0 |
+| `classified-miss@c4` | 4 | 31.494 ms | 51.297 ms | 52.604 ms | 55.683 ms | 68.019 ms | 103.6 req/s | 0 |
+| `baseline-hit@c4` | 4 | 0.087 ms | 0.143 ms | 0.181 ms | 0.270 ms | 0.700 ms | 3538.8 req/s | 0 |
+| `classified-hit@c4` | 4 | 0.156 ms | 0.227 ms | 0.316 ms | 0.635 ms | 1.087 ms | 3335.0 req/s | 0 |
+
+**Assertions that ran.** SPEC-BENCH §0 rule 3 requires each scenario to prove its own premise; these are the checks this run made and their outcome.
+
+| Arm | Assertion | Result |
+| --- | --- | :---: |
+| `baseline-miss@c1` | `sample_count` | PASS |
+| `baseline-miss@c1` | `transport_errors_within_budget` | PASS |
+| `baseline-miss@c1` | `status_as_expected` | PASS |
+| `baseline-miss@c1` | `warmup_excluded_from_window` | PASS |
+| `baseline-miss@c1` | `percentiles_monotone` | PASS |
+| `baseline-miss@c1` | `not_measured_through_a_tunnel` | PASS |
+| `baseline-miss@c1` | `miss_arm_keys_are_unique` | PASS |
+| `baseline-miss@c1` | `baseline_is_unclassified` | PASS |
+| `baseline-miss@c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c1` | `sample_count` | PASS |
+| `classified-miss@c1` | `transport_errors_within_budget` | PASS |
+| `classified-miss@c1` | `status_as_expected` | PASS |
+| `classified-miss@c1` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@c1` | `percentiles_monotone` | PASS |
+| `classified-miss@c1` | `not_measured_through_a_tunnel` | PASS |
+| `classified-miss@c1` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@c1` | `classification_premise_verified` | PASS |
+| `classified-miss@c1` | `every_classification_succeeded` | PASS |
+| `classified-miss@c1` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c1` | `hop_costs_something_measurable` | PASS |
+| `baseline-hit@c1` | `sample_count` | PASS |
+| `baseline-hit@c1` | `transport_errors_within_budget` | PASS |
+| `baseline-hit@c1` | `status_as_expected` | PASS |
+| `baseline-hit@c1` | `warmup_excluded_from_window` | PASS |
+| `baseline-hit@c1` | `percentiles_monotone` | PASS |
+| `baseline-hit@c1` | `not_measured_through_a_tunnel` | PASS |
+| `baseline-hit@c1` | `hit_arm_uses_one_key` | PASS |
+| `baseline-hit@c1` | `baseline_is_unclassified` | PASS |
+| `classified-hit@c1` | `sample_count` | PASS |
+| `classified-hit@c1` | `transport_errors_within_budget` | PASS |
+| `classified-hit@c1` | `status_as_expected` | PASS |
+| `classified-hit@c1` | `warmup_excluded_from_window` | PASS |
+| `classified-hit@c1` | `percentiles_monotone` | PASS |
+| `classified-hit@c1` | `not_measured_through_a_tunnel` | PASS |
+| `classified-hit@c1` | `hit_arm_uses_one_key` | PASS |
+| `classified-hit@c1` | `classification_premise_verified` | PASS |
+| `classified-hit@c1` | `every_classification_succeeded` | PASS |
+| `classified-hit@c1` | `hop_costs_something_measurable` | PASS |
+| `baseline-miss@c4` | `sample_count` | PASS |
+| `baseline-miss@c4` | `transport_errors_within_budget` | PASS |
+| `baseline-miss@c4` | `status_as_expected` | PASS |
+| `baseline-miss@c4` | `warmup_excluded_from_window` | PASS |
+| `baseline-miss@c4` | `percentiles_monotone` | PASS |
+| `baseline-miss@c4` | `not_measured_through_a_tunnel` | PASS |
+| `baseline-miss@c4` | `miss_arm_keys_are_unique` | PASS |
+| `baseline-miss@c4` | `baseline_is_unclassified` | PASS |
+| `baseline-miss@c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c4` | `sample_count` | PASS |
+| `classified-miss@c4` | `transport_errors_within_budget` | PASS |
+| `classified-miss@c4` | `status_as_expected` | PASS |
+| `classified-miss@c4` | `warmup_excluded_from_window` | PASS |
+| `classified-miss@c4` | `percentiles_monotone` | PASS |
+| `classified-miss@c4` | `not_measured_through_a_tunnel` | PASS |
+| `classified-miss@c4` | `miss_arm_keys_are_unique` | PASS |
+| `classified-miss@c4` | `classification_premise_verified` | PASS |
+| `classified-miss@c4` | `every_classification_succeeded` | PASS |
+| `classified-miss@c4` | `no_cross_arm_key_reuse` | PASS |
+| `classified-miss@c4` | `hop_costs_something_measurable` | PASS |
+| `baseline-hit@c4` | `sample_count` | PASS |
+| `baseline-hit@c4` | `transport_errors_within_budget` | PASS |
+| `baseline-hit@c4` | `status_as_expected` | PASS |
+| `baseline-hit@c4` | `warmup_excluded_from_window` | PASS |
+| `baseline-hit@c4` | `percentiles_monotone` | PASS |
+| `baseline-hit@c4` | `not_measured_through_a_tunnel` | PASS |
+| `baseline-hit@c4` | `hit_arm_uses_one_key` | PASS |
+| `baseline-hit@c4` | `baseline_is_unclassified` | PASS |
+| `classified-hit@c4` | `sample_count` | PASS |
+| `classified-hit@c4` | `transport_errors_within_budget` | PASS |
+| `classified-hit@c4` | `status_as_expected` | PASS |
+| `classified-hit@c4` | `warmup_excluded_from_window` | PASS |
+| `classified-hit@c4` | `percentiles_monotone` | PASS |
+| `classified-hit@c4` | `not_measured_through_a_tunnel` | PASS |
+| `classified-hit@c4` | `hit_arm_uses_one_key` | PASS |
+| `classified-hit@c4` | `classification_premise_verified` | PASS |
+| `classified-hit@c4` | `every_classification_succeeded` | PASS |
+| `classified-hit@c4` | `hop_costs_something_measurable` | PASS |
+
+### What this says
+
+* Measured from inside the cluster, not through a tunnel — asserted, because a port-forwarded probe previously read an order of magnitude high.
+* `baseline-miss@c1`: p50 0.059 ms, p99 0.152 ms.
+* `classified-miss@c1`: p50 21.035 ms, p99 23.394 ms.
+* `baseline-hit@c1`: p50 0.055 ms, p99 0.133 ms.
+* `classified-hit@c1`: p50 0.115 ms, p99 0.215 ms.
+* `baseline-miss@c4`: p50 0.075 ms, p99 0.197 ms.
+* `classified-miss@c4`: p50 31.494 ms, p99 55.683 ms.
+* `baseline-hit@c4`: p50 0.087 ms, p99 0.270 ms.
+* `classified-hit@c4`: p50 0.156 ms, p99 0.635 ms.
+
+## Model-affinity — does the cheap model actually succeed?
+
+B-4's routing accuracy measures agreement with a human-authored tier-to-cluster mapping, not whether the small model would actually have failed. This experiment sends every held-out prompt to both real backends, judges both answers blind, and defines the routing target as the cheapest model that meets the quality bar -- no human opinion about "COMPLEX" involved. Full methodology and the two measurement bugs found and fixed en route (judge JSON-extraction failures, a truncation-dominated first pass): `bench/affinity/ANALYSIS.md`.
+
+**Read the judge-reliability section before the headline numbers.** Every metric below is built from the judge's absolute per-response `meets_bar` field, never from its relative pairwise `verdict`. Under a position swap on identical content, `meets_bar` for the small model's response is stable (0.0% flip, n=23); for the large model's response it flips 65.2% of the time (n=23). That instability is real, disclosed, and not resolved -- it is why every number below is phrased as *observed under this evaluator*, not as ground truth.
+
+| Metric (evaluator-derived; see caveat above) | Value |
+| --- | ---: |
+| Exact four-tier accuracy (predicted label == human label) | 68.6% |
+| Human tier -> route agreement | 78.0% |
+| **Observed model-selection agreement** (route == cheapest model meeting the bar, per this evaluator) | **78.6%** |
+| Under-routing / quality risk -- depends on the UNSTABLE large-side signal | 11.9% |
+| Over-routing / wasted capacity -- depends only on the STABLE small-side signal | 5.9% |
+| Neither model sufficient (both responses judged inadequate) | 16.9% |
+| Evaluator-estimated oracle small-share (fraction where small alone would suffice) | 55.9% |
+| Realized classifier small-share | 50.0% |
+
+**Judge-reliability controls, in full:**
+
+| Control | Result |
+| --- | ---: |
+| `verdict` (relative, pairwise) position-bias flip rate -- not used in any metric above | 11.5% (n=26) |
+| `meets_bar`, small model's response, position-bias flip rate | **0.0%** (n=23) |
+| `meets_bar`, large model's response, position-bias flip rate | **65.2%** (n=23) |
+| Inter-judge agreement (`qwen38-27b` judging the same subsample) | 90.5% (n=21) |
+
+**Cost of the mapping choice, on observed outcomes (not labels).** `L = lambda_q . P(under-route) + lambda_c . P(over-route)`, scored against the SAME classifier output -- this compares decision rules, not classifiers.
+
+| Mapping | under-rate | over-rate | L (lambda_q=5) | L (lambda_q=10) |
+| --- | ---: | ---: | ---: | ---: |
+| `MEDIUM->large (safety-biased)` | 1.7% | 25.4% | 0.339 | 0.424 |
+| `MEDIUM->small (deployed)` | 11.9% | 5.9% | 0.653 | 1.246 |
+| `REASONING-only->large (cost-biased)` | 20.3% | 5.9% | 1.076 | 2.093 |
+
+### What this says
+
+The observed model-selection agreement (78.6%) lands almost exactly on the human-label agreement figure (78.0% from B-4) -- the fuzzy human labels correlate about as well with real model outcomes as with the classifier's own label. On observed outcomes rather than labels, the safety-biased `MEDIUM->large` mapping still cuts under-routing sharply at a disclosed cost in over-routing -- the same qualitative conclusion B-4 reached from label data, now checked against what actually happens when the escalated prompts are answered for real.
 
 ## Reproducing
 

@@ -646,6 +646,166 @@ def not_yet_measured(present):
     return out
 
 
+
+def load_json(path):
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def b5r_section(results_dir):
+    """B-5R -- ground-truth per-request-isolated latency. Supersedes B-5's
+    arm-level numbers above (which failed their own contamination assertions).
+    Bespoke JSON shape (not the harness's manifest/scenarios schema), so this
+    reads results/b5r-summary.json directly rather than through load_runs().
+    """
+    b5r = load_json(os.path.join(results_dir, "b5r-summary.json"))
+    if not b5r:
+        return []
+    heuristic = load_json(os.path.join(results_dir, "b5-contamination-analysis.json"))
+
+    out = ["## B-5R — Ground-truth isolated latency (supersedes B-5)", "",
+          "B-5 above failed its own contamination assertions on all three real-model arms -- "
+          "another tenant shared these single-slot backends during the run, and its numbers "
+          "are not evidence. B-5R replaces inference with proof: before and after **every "
+          "individual request**, both backends' own llama.cpp `/metrics` counters are "
+          "snapshotted and reconciled against that request's own response `usage`. If the "
+          "backend generated more tokens than our request asked for, someone else's "
+          "generation landed in the window -- proven, not inferred from timing. Requests are "
+          "sampled until 40 ground-truth-verified **isolated** observations are collected per "
+          "arm; contaminated attempts are kept as a separate `shared_load` population, never "
+          "averaged in.", "",
+          "**p50/p90 are the numbers to cite. p99 at n=40 describes the tail of a small "
+          "sample, not a stable 99th-percentile estimate** -- included below because the "
+          "harness's percentile reducer is applied consistently everywhere, not because it "
+          "should be read as precise.", ""]
+
+    order = ["always-large", "always-small", "classified"]
+    out += ["| Arm | p50 | p90 | isolated n | shared_load n (kept, excluded from percentiles) |",
+           "| --- | ---: | ---: | ---: | ---: |"]
+    for arm in order:
+        d = b5r.get(arm)
+        if not d:
+            continue
+        lat = d.get("isolated_latency_ms", {})
+        out.append("| `%s` | %s | %s | %d | %d |" % (
+            arm, ms(lat.get("p50")), ms(lat.get("p90")), d.get("isolated_n", 0), d.get("shared_load_n", 0)))
+    out.append("")
+
+    if heuristic:
+        out += ["**For context, the withdrawn heuristic salvage** (post-hoc tokens/sec "
+               "clustering on the original contaminated run, before B-5R existed) is kept "
+               "here rather than deleted, per the corrections policy below -- it is NOT "
+               "ground truth and its p99 was already withdrawn as meaningless at n=20-31:", ""]
+        out += ["| Arm | \"likely-uncontended\" p50 (heuristic, n<40) |", "| --- | ---: |"]
+        for arm in order:
+            d = heuristic.get(arm)
+            if not d:
+                continue
+            lat = d.get("likely_uncontended_latency_ms", {})
+            out.append("| `%s` | %s (n=%d) |" % (arm, ms(lat.get("p50")), lat.get("n", 0)))
+        out.append("")
+
+    out += ["### What this says", "",
+           "With genuine contamination proven absent rather than inferred, `always-large` "
+           "and `always-small` are close (%s vs %s p50) -- **not** the wide gap the withdrawn "
+           "heuristic suggested, which was itself mostly residual contamination the heuristic "
+           "could not fully separate out. `classified` beats both pure strategies on median, "
+           "plausibly from natural early-stopping on easy prompts pulling its distribution "
+           "down in a way neither single-model arm experiences alone." % (
+               ms((b5r.get('always-large') or {}).get('isolated_latency_ms', {}).get('p50')),
+               ms((b5r.get('always-small') or {}).get('isolated_latency_ms', {}).get('p50'))), "",
+           "**This is a latency result, not yet \"the payoff.\"** Whether the traffic "
+           "`classified` sends to the large model *needed* to go there is a quality question, "
+           "answered separately (model-affinity, below) -- not a latency one.", ""]
+    return out
+
+
+def affinity_section(results_dir):
+    """Model-affinity: does the cheap model actually succeed, independent of the
+    human label? Bespoke JSON shape; reads results/affinity-summary.json directly.
+    """
+    s = load_json(os.path.join(results_dir, "affinity-summary.json"))
+    if not s:
+        return []
+
+    ctrl = s.get("controls", {})
+    pbb = ctrl.get("position_bias_meets_bar", {})
+    pbv = ctrl.get("position_bias_verdict", {})
+    ij = ctrl.get("inter_judge", {})
+
+    out = ["## Model-affinity — does the cheap model actually succeed?", "",
+          "B-4's routing accuracy measures agreement with a human-authored tier-to-cluster "
+          "mapping, not whether the small model would actually have failed. This experiment "
+          "sends every held-out prompt to both real backends, judges both answers blind, and "
+          "defines the routing target as the cheapest model that meets the quality bar -- no "
+          "human opinion about \"COMPLEX\" involved. Full methodology and the two measurement "
+          "bugs found and fixed en route (judge JSON-extraction failures, a "
+          "truncation-dominated first pass): `bench/affinity/ANALYSIS.md`.", "",
+          "**Read the judge-reliability section before the headline numbers.** Every metric "
+          "below is built from the judge's absolute per-response `meets_bar` field, never "
+          "from its relative pairwise `verdict`. Under a position swap on identical content, "
+          "`meets_bar` for the small model's response is stable (%s%% flip, n=%s); for the "
+          "large model's response it flips %s%% of the time (n=%s). That instability is real, "
+          "disclosed, and not resolved -- it is why every number below is phrased as "
+          "*observed under this evaluator*, not as ground truth." % (
+              pct0(pbb.get("small_flip_rate")), pbb.get("n", "?"),
+              pct0(pbb.get("large_flip_rate")), pbb.get("n", "?")), ""]
+
+    out += ["| Metric (evaluator-derived; see caveat above) | Value |",
+           "| --- | ---: |",
+           "| Exact four-tier accuracy (predicted label == human label) | %s |" % pct(s.get("exact_four_tier_accuracy")),
+           "| Human tier -> route agreement | %s |" % pct(s.get("human_tier_route_agreement")),
+           "| **Observed model-selection agreement** (route == cheapest model meeting the bar, per this evaluator) | **%s** |" % pct(s.get("actual_model_selection_accuracy")),
+           "| Under-routing / quality risk -- depends on the UNSTABLE large-side signal | %s |" % pct(s.get("under_routing_quality_risk")),
+           "| Over-routing / wasted capacity -- depends only on the STABLE small-side signal | %s |" % pct(s.get("over_routing_wasted_capacity")),
+           "| Neither model sufficient (both responses judged inadequate) | %s |" % pct(s.get("neither_model_suffices")),
+           "| Evaluator-estimated oracle small-share (fraction where small alone would suffice) | %s |" % pct(s.get("achievable_oracle_small_share")),
+           "| Realized classifier small-share | %s |" % pct(s.get("realized_classifier_small_share")),
+           ""]
+
+    out += ["**Judge-reliability controls, in full:**", "",
+           "| Control | Result |", "| --- | ---: |",
+           "| `verdict` (relative, pairwise) position-bias flip rate -- not used in any metric above | %s (n=%s) |" % (pct(pbv.get("flip_rate")), pbv.get("n", "?")),
+           "| `meets_bar`, small model's response, position-bias flip rate | **%s** (n=%s) |" % (pct(pbb.get("small_flip_rate")), pbb.get("n", "?")),
+           "| `meets_bar`, large model's response, position-bias flip rate | **%s** (n=%s) |" % (pct(pbb.get("large_flip_rate")), pbb.get("n", "?")),
+           "| Inter-judge agreement (`qwen38-27b` judging the same subsample) | %s (n=%s) |" % (pct(ij.get("agreement_rate")), ij.get("n", "?")),
+           ""]
+
+    cost = s.get("cost_table", {})
+    if cost:
+        out += ["**Cost of the mapping choice, on observed outcomes (not labels).** "
+               "`L = lambda_q . P(under-route) + lambda_c . P(over-route)`, scored against the "
+               "SAME classifier output -- this compares decision rules, not classifiers.", "",
+               "| Mapping | under-rate | over-rate | L (lambda_q=5) | L (lambda_q=10) |",
+               "| --- | ---: | ---: | ---: | ---: |"]
+        for name in ("MEDIUM->large (safety-biased)", "MEDIUM->small (deployed)",
+                    "REASONING-only->large (cost-biased)"):
+            d = cost.get(name)
+            if not d:
+                continue
+            out.append("| `%s` | %s | %s | %.3f | %.3f |" % (
+                name, pct(d.get("under_rate")), pct(d.get("over_rate")),
+                d.get("L", {}).get("5", 0), d.get("L", {}).get("10", 0)))
+        out.append("")
+
+    out += ["### What this says", "",
+           "The observed model-selection agreement (%s) lands almost exactly on the "
+           "human-label agreement figure (%s from B-4) -- the fuzzy human labels correlate "
+           "about as well with real model outcomes as with the classifier's own label. On "
+           "observed outcomes rather than labels, the safety-biased `MEDIUM->large` mapping "
+           "still cuts under-routing sharply at a disclosed cost in over-routing -- the same "
+           "qualitative conclusion B-4 reached from label data, now checked against what "
+           "actually happens when the escalated prompts are answered for real." % (
+               pct(s.get("actual_model_selection_accuracy")), pct(s.get("human_tier_route_agreement"))), ""]
+    return out
+
+
+def pct0(value):
+    return "n/a" if value is None else "%.1f" % (100 * value)
+
+
 def render(runs):
     present = latest_by_spec(runs)
     out = ["# Benchmarks — the `llm_d_sc` filter for Praxis Proxy", "",
@@ -656,6 +816,9 @@ def render(runs):
     for spec in SPEC_ORDER:
         if spec in present:
             out += chapter(present[spec])
+            if spec == "B-5":
+                out += b5r_section(DEFAULT_RESULTS)
+    out += affinity_section(DEFAULT_RESULTS)
     out += not_yet_measured(present)
     out += ["## Reproducing", "",
             "See `bench/README.md`. Every run writes its own manifest (UTC timestamp, git sha of "

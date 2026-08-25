@@ -161,8 +161,11 @@ makes awkward: only one of them can select a cluster.
 
 > **Correction.** An earlier revision of this section said the classifier "has a
 > central-tendency bias." That was too broad and unfair to the model, and it is corrected
-> here rather than quietly replaced. The classifier is **97.5% accurate**; the effect
-> below is a property of prompt *framing*, not a defect in the model.
+> here rather than quietly replaced. **The classifier achieves 97.5% on llm-d-sc's own
+> published held-out set** (reproduced exactly, below); the effect described in this
+> section is a cross-framing generalization gap on a different, independently-authored
+> prompt set — not an integration failure, and not evidence the model is broadly
+> inaccurate.
 
 **First, three things were ruled out before blaming anything:**
 
@@ -313,17 +316,20 @@ routing error, and the reverse can be true too. This experiment asks both real b
 every frozen prompt, judges both answers blind, and defines the routing target as the
 cheapest model that meets the quality bar — no human opinion about "COMPLEX" involved.
 
-**Actual model-selection accuracy: 78.6%** (n=118) — landing almost exactly on the
-human-label figure. That is itself a finding: the fuzzy human labels, for all their
-framing-generalization limits (F-7), correlate about as well with real model outcomes as
-they do with the classifier's own label.
+**Observed model-selection agreement under this evaluator: 78.6%** (n=118) — landing
+almost exactly on the human-label figure. That is itself a finding: the fuzzy human
+labels, for all their framing-generalization limits (F-7), correlate about as well with
+real model outcomes as they do with the classifier's own label. "Under this evaluator" is
+not a hedge — the judge-reliability control below found a real, substantial instability in
+one of the two signals every number in this table is built from, so these are evaluator-
+derived agreement rates, not an objective ground truth.
 
 | Metric | Value |
 |---|---:|
-| Under-routing / quality risk | 11.9% |
-| Over-routing / wasted capacity | 5.9% |
+| Under-routing / quality risk (depends on the unstable large-side signal, below) | 11.9% |
+| Over-routing / wasted capacity (depends only on the stable small-side signal) | 5.9% |
 | Neither model sufficient | 16.9% |
-| Achievable oracle small-share | 55.9% |
+| Evaluator-estimated oracle small-share | 55.9% |
 
 **Two serious methodology problems surfaced and were fixed before trusting these numbers**
 (full account in `bench/affinity/ANALYSIS.md`): the judge's own output was unparseable 28%
