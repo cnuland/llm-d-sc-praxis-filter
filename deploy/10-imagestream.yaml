@@ -1,0 +1,12 @@
+# Holds the Praxis-with-llm_d_sc image produced by the BuildConfig.
+# The cluster's internal registry is the ONLY push target for this POC.
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: praxis-llm-d-sc
+  labels:
+    app.kubernetes.io/name: praxis
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+spec:
+  lookupPolicy:
+    local: true

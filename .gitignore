@@ -1,0 +1,7 @@
+/target
+__pycache__/
+*.pyc
+*.log
+demo/evidence/
+bench/results/*.log
+.DS_Store

@@ -1,0 +1,922 @@
+{
+  "manifest": {
+    "argv": [
+      "/bench/bench/harness.py",
+      "--scenario",
+      "b7c",
+      "--target",
+      "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+      "--param",
+      "baseline_url=http://praxis-bench.praxis-poc.svc.cluster.local:8085",
+      "--param",
+      "metrics_url=http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics",
+      "--topology",
+      "in-cluster-job",
+      "--warmup",
+      "200",
+      "--measured",
+      "1000",
+      "--concurrency",
+      "1,4",
+      "--out",
+      "/bench/bench/results/b7c-incluster.json"
+    ],
+    "b7_hop_deltas_ms": {
+      "classified-hit@c1": {
+        "max": 41.464261,
+        "p50": 0.060453999999999994,
+        "p90": 0.08891700000000001,
+        "p95": 0.08762600000000001,
+        "p99": 0.08191300000000001
+      },
+      "classified-hit@c4": {
+        "max": 0.3867569999999999,
+        "p50": 0.06924899999999999,
+        "p90": 0.08401799999999998,
+        "p95": 0.13494400000000004,
+        "p99": 0.365206
+      },
+      "classified-miss@c1": {
+        "max": 24.299328,
+        "p50": 20.975497999999998,
+        "p90": 21.603139000000002,
+        "p95": 21.985297,
+        "p99": 23.24222
+      },
+      "classified-miss@c4": {
+        "max": 67.584312,
+        "p50": 31.419054,
+        "p90": 51.183635,
+        "p95": 52.460678,
+        "p99": 55.48654500000001
+      }
+    },
+    "command": "/bench/bench/harness.py --scenario b7c --target http://praxis-bench.praxis-poc.svc.cluster.local:8084 --param baseline_url=http://praxis-bench.praxis-poc.svc.cluster.local:8085 --param metrics_url=http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics --topology in-cluster-job --warmup 200 --measured 1000 --concurrency 1,4 --out /bench/bench/results/b7c-incluster.json",
+    "concurrency": [
+      1,
+      4
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: not a git repository (or any parent up to mount point /) Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).",
+        "path": "/bench",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": null,
+        "error": "not a directory",
+        "path": "/opt/app-root/src/llm-d-sc-genesis",
+        "sha": null,
+        "untracked": null
+      }
+    },
+    "host": {
+      "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
+      "hostname": "praxis-bench",
+      "logical_cores": 32,
+      "machine": "x86_64",
+      "os": "Linux-6.12.0-142.el10.x86_64-x86_64-with-glibc2.34",
+      "python": "3.11.13",
+      "python_implementation": "CPython"
+    },
+    "leakage_check": {
+      "anchor_count": 138,
+      "clean": true,
+      "comparisons": 17664,
+      "limits": {
+        "content_containment": 0.75,
+        "content_jaccard": 0.6,
+        "full_containment": 0.8,
+        "full_jaccard": 0.6
+      },
+      "max_containment_observed": 0.5,
+      "max_full_containment_observed": 0.7143,
+      "max_full_jaccard_observed": 0.5556,
+      "max_jaccard_observed": 0.3333,
+      "near_duplicates": 0,
+      "verbatim_overlaps": 0
+    },
+    "measured": 1000,
+    "notes": [
+      "Run from a Pod inside the cluster. A figure measured through oc port-forward is a measurement of the tunnel, not of the network.",
+      "The upstream is Praxis's own static_response filter, not a model endpoint: SPEC-BENCH \u00a73 keeps a concurrency-16 sweep away from the single-replica homelab backends. Everything on the path being timed is real -- body buffer, extract, gRPC across the ClusterIP Service, and llm-d-sc's forward.",
+      "Classification is verified from Praxis's own llm_d_sc_classify_total counter, which must move by exactly the arm's request count on a classified arm and by exactly zero on a baseline arm. Response-header provenance is unavailable in-cluster because nothing echoes the upstream request headers back.",
+      "static_response answers without draining the request body, so each response closes the connection and every request pays a fresh TCP handshake. Both arms pay it identically, so the reported delta is unaffected; the absolute figures include it.",
+      "Percentiles are nearest-rank and warmup is excluded, matching llm-d-sc's own topology table so the rows are directly comparable rather than merely similar."
+    ],
+    "params": {
+      "baseline_url": "http://praxis-bench.praxis-poc.svc.cluster.local:8085",
+      "metrics_url": "http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics"
+    },
+    "prompts_file": "/bench/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/bench/bench/results/b7c-incluster.records.jsonl",
+    "run_id": "20260825T002217Z-14",
+    "scenario": "b7c",
+    "scenario_description": "In-cluster topology: Praxis -> llm-d-sc across a ClusterIP Service under gateway concurrency.",
+    "scenario_spec": "B-7",
+    "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+    "topology": "in-cluster-job",
+    "unix": 1787617374.2618463,
+    "utc": "2026-08-25T00:22:54Z",
+    "warmup": 200
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.0594 p90=0.0853 p95=0.0989 p99=0.1519 max=0.3197",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 0 across the baseline arm; expected exactly 0. Any movement means the control arm went through the filter and the delta against it is meaningless.",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "praxis_classify_rtt_ms": {
+          "max": 0.0,
+          "n": 12002,
+          "p50": 0.0,
+          "p90": 0.0,
+          "p95": 0.0,
+          "p99": 0.0
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 0.0,
+        "praxis_route_delta": {}
+      },
+      "latency_ms": {
+        "max": 0.319661,
+        "n": 1000,
+        "p50": 0.059352,
+        "p90": 0.08532,
+        "p95": 0.098946,
+        "p99": 0.151946
+      },
+      "measured_window_s": 0.9890134950401261,
+      "name": "baseline-miss@c1",
+      "notes": "Cache miss. A miss adds llm-d-sc's model forward on top of the hop.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "request_id -> static_response",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "hop": "none: control arm, no classifier contacted",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8085",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 1011.1085490895431
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=21.0348 p90=21.6885 p95=22.0842 p99=23.3942 max=24.6190",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 1200 across this arm; expected exactly 1200 (warmup 200 + measured 1000). Status breakdown after the arm: {'TIMEOUT': 773.0, 'OK': 10814.0, 'RESOURCE_EXHAUSTED': 1615.0}",
+          "name": "classification_premise_verified",
+          "passed": true
+        },
+        {
+          "detail": "1200 of 1200 classifications returned status OK; a TIMEOUT or UNAVAILABLE would mean the arm timed a fail-open path rather than the hop it claims to time. Routing delta: {'SIMPLE->small': 1.0, 'MEDIUM->small': 1199.0}",
+          "name": "every_classification_succeeded",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "p50 delta vs baseline-miss@c1 is +20.975 ms. The classified arm does strictly more work than the control -- a gRPC round trip across a ClusterIP Service -- so a delta at or below zero means the arms were not what they claim to be.",
+          "name": "hop_costs_something_measurable",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "hop_delta_ms_vs_baseline": {
+          "baseline_arm": "baseline-miss@c1",
+          "max": 24.299328,
+          "note": "classified minus baseline at the same concurrency and cache mode. Both arms terminate in the same static_response and pay the same per-request connection setup, so the delta is the Praxis -> llm-d-sc hop plus llm-d-sc's work.",
+          "p50": 20.975497999999998,
+          "p90": 21.603139000000002,
+          "p95": 21.985297,
+          "p99": 23.24222
+        },
+        "praxis_classify_rtt_ms": {
+          "max": 22.344262,
+          "n": 13202,
+          "p50": 20.727374392827066,
+          "p90": 21.13341128062256,
+          "p95": 21.46567743538467,
+          "p99": 22.022293061294764
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 1200.0,
+        "praxis_route_delta": {
+          "MEDIUM->small": 1199.0,
+          "SIMPLE->small": 1.0
+        }
+      },
+      "latency_ms": {
+        "max": 24.618989,
+        "n": 1000,
+        "p50": 21.03485,
+        "p90": 21.688459,
+        "p95": 22.084243,
+        "p99": 23.394166
+      },
+      "measured_window_s": 22.46471290802583,
+      "name": "classified-miss@c1",
+      "notes": "Cache miss. A miss adds llm-d-sc's model forward on top of the hop.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "request_id -> llm_d_sc -> static_response",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "hop": "praxis -> llm-d-sc (ClusterIP Service)",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 44.514256829996526
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.0547 p90=0.0687 p95=0.0801 p99=0.1331 max=0.2150",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 0 across the baseline arm; expected exactly 0. Any movement means the control arm went through the filter and the delta against it is meaningless.",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "praxis_classify_rtt_ms": {
+          "max": 22.344262,
+          "n": 13202,
+          "p50": 20.727374392827066,
+          "p90": 21.13341128062256,
+          "p95": 21.46567743538467,
+          "p99": 22.022293061294764
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 0.0,
+        "praxis_route_delta": {}
+      },
+      "latency_ms": {
+        "max": 0.215004,
+        "n": 1000,
+        "p50": 0.054743,
+        "p90": 0.068729,
+        "p95": 0.08012,
+        "p99": 0.133131
+      },
+      "measured_window_s": 0.9020268629537895,
+      "name": "baseline-hit@c1",
+      "notes": "Cache hit. A hit does no model forward, so it isolates the network hop plus llm-d-sc's cache lookup.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "request_id -> static_response",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "hop": "none: control arm, no classifier contacted",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8085",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 1108.61443385997
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1152 p90=0.1576 p95=0.1677 p99=0.2150 max=41.6793",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 1200 across this arm; expected exactly 1200 (warmup 200 + measured 1000). Status breakdown after the arm: {'OK': 12014.0, 'RESOURCE_EXHAUSTED': 1615.0, 'TIMEOUT': 773.0}",
+          "name": "classification_premise_verified",
+          "passed": true
+        },
+        {
+          "detail": "1200 of 1200 classifications returned status OK; a TIMEOUT or UNAVAILABLE would mean the arm timed a fail-open path rather than the hop it claims to time. Routing delta: {'MEDIUM->small': 1200.0}",
+          "name": "every_classification_succeeded",
+          "passed": true
+        },
+        {
+          "detail": "p50 delta vs baseline-hit@c1 is +0.060 ms. The classified arm does strictly more work than the control -- a gRPC round trip across a ClusterIP Service -- so a delta at or below zero means the arms were not what they claim to be.",
+          "name": "hop_costs_something_measurable",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "hop_delta_ms_vs_baseline": {
+          "baseline_arm": "baseline-hit@c1",
+          "max": 41.464261,
+          "note": "classified minus baseline at the same concurrency and cache mode. Both arms terminate in the same static_response and pay the same per-request connection setup, so the delta is the Praxis -> llm-d-sc hop plus llm-d-sc's work.",
+          "p50": 0.060453999999999994,
+          "p90": 0.08891700000000001,
+          "p95": 0.08762600000000001,
+          "p99": 0.08191300000000001
+        },
+        "praxis_classify_rtt_ms": {
+          "max": 41.195035,
+          "n": 14402,
+          "p50": 0.058710026443685365,
+          "p90": 0.05951393700692597,
+          "p95": 0.08562784495189082,
+          "p99": 20.83960496474646
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 1200.0,
+        "praxis_route_delta": {
+          "MEDIUM->small": 1200.0
+        }
+      },
+      "latency_ms": {
+        "max": 41.679265,
+        "n": 1000,
+        "p50": 0.115197,
+        "p90": 0.157646,
+        "p95": 0.167746,
+        "p99": 0.215044
+      },
+      "measured_window_s": 1.0140468319877982,
+      "name": "classified-hit@c1",
+      "notes": "Cache hit. A hit does no model forward, so it isolates the network hop plus llm-d-sc's cache lookup.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "request_id -> llm_d_sc -> static_response",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "hop": "praxis -> llm-d-sc (ClusterIP Service)",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 986.1477482649764
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.0751 p90=0.1130 p95=0.1428 p99=0.1966 max=0.4351",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 0 across the baseline arm; expected exactly 0. Any movement means the control arm went through the filter and the delta against it is meaningless.",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "praxis_classify_rtt_ms": {
+          "max": 41.195035,
+          "n": 14402,
+          "p50": 0.058710026443685365,
+          "p90": 0.05951393700692597,
+          "p95": 0.08562784495189082,
+          "p99": 20.83960496474646
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 0.0,
+        "praxis_route_delta": {}
+      },
+      "latency_ms": {
+        "max": 0.435098,
+        "n": 1000,
+        "p50": 0.075061,
+        "p90": 0.112983,
+        "p95": 0.142848,
+        "p99": 0.1966
+      },
+      "measured_window_s": 0.26222542696632445,
+      "name": "baseline-miss@c4",
+      "notes": "Cache miss. A miss adds llm-d-sc's model forward on top of the hop.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "request_id -> static_response",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "hop": "none: control arm, no classifier contacted",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8085",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 3813.5127152578616
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=31.4941 p90=51.2966 p95=52.6035 p99=55.6831 max=68.0194",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 1200 across this arm; expected exactly 1200 (warmup 200 + measured 1000). Status breakdown after the arm: {'OK': 13214.0, 'RESOURCE_EXHAUSTED': 1615.0, 'TIMEOUT': 773.0}",
+          "name": "classification_premise_verified",
+          "passed": true
+        },
+        {
+          "detail": "1200 of 1200 classifications returned status OK; a TIMEOUT or UNAVAILABLE would mean the arm timed a fail-open path rather than the hop it claims to time. Routing delta: {'MEDIUM->small': 1198.0, 'SIMPLE->small': 2.0}",
+          "name": "every_classification_succeeded",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "p50 delta vs baseline-miss@c4 is +31.419 ms. The classified arm does strictly more work than the control -- a gRPC round trip across a ClusterIP Service -- so a delta at or below zero means the arms were not what they claim to be.",
+          "name": "hop_costs_something_measurable",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "hop_delta_ms_vs_baseline": {
+          "baseline_arm": "baseline-miss@c4",
+          "max": 67.584312,
+          "note": "classified minus baseline at the same concurrency and cache mode. Both arms terminate in the same static_response and pay the same per-request connection setup, so the delta is the Praxis -> llm-d-sc hop plus llm-d-sc's work.",
+          "p50": 31.419054,
+          "p90": 51.183635,
+          "p95": 52.460678,
+          "p99": 55.48654500000001
+        },
+        "praxis_classify_rtt_ms": {
+          "max": 67.366913,
+          "n": 15602,
+          "p50": 0.09600598392979513,
+          "p90": 48.021809094835646,
+          "p95": 50.383072925956625,
+          "p99": 53.809781571652415
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 1200.0,
+        "praxis_route_delta": {
+          "MEDIUM->small": 1198.0,
+          "SIMPLE->small": 2.0
+        }
+      },
+      "latency_ms": {
+        "max": 68.01941,
+        "n": 1000,
+        "p50": 31.494115,
+        "p90": 51.296618,
+        "p95": 52.603526,
+        "p99": 55.683145
+      },
+      "measured_window_s": 9.651638695970178,
+      "name": "classified-miss@c4",
+      "notes": "Cache miss. A miss adds llm-d-sc's model forward on top of the hop.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "request_id -> llm_d_sc -> static_response",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "hop": "praxis -> llm-d-sc (ClusterIP Service)",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 103.60934878525107
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.0869 p90=0.1430 p95=0.1809 p99=0.2702 max=0.7003",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 0 across the baseline arm; expected exactly 0. Any movement means the control arm went through the filter and the delta against it is meaningless.",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "praxis_classify_rtt_ms": {
+          "max": 67.366913,
+          "n": 15602,
+          "p50": 0.09600598392979513,
+          "p90": 48.021809094835646,
+          "p95": 50.383072925956625,
+          "p99": 53.809781571652415
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 0.0,
+        "praxis_route_delta": {}
+      },
+      "latency_ms": {
+        "max": 0.700327,
+        "n": 1000,
+        "p50": 0.086884,
+        "p90": 0.143049,
+        "p95": 0.18091,
+        "p99": 0.270248
+      },
+      "measured_window_s": 0.2825821010628715,
+      "name": "baseline-hit@c4",
+      "notes": "Cache hit. A hit does no model forward, so it isolates the network hop plus llm-d-sc's cache lookup.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "request_id -> static_response",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "hop": "none: control arm, no classifier contacted",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8085",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 3538.794552941308
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1561 p90=0.2271 p95=0.3159 p99=0.6355 max=1.0871",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "topology label 'in-cluster-job' with target host 'praxis-bench.praxis-poc.svc.cluster.local'. SPEC-BENCH \u00a71 B-7: a measurement taken through oc port-forward is a measurement of the tunnel -- an observed p50 of 145 ms against an in-cluster expectation of ~13 ms.",
+          "name": "not_measured_through_a_tunnel",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 1200 across this arm; expected exactly 1200 (warmup 200 + measured 1000). Status breakdown after the arm: {'RESOURCE_EXHAUSTED': 1615.0, 'TIMEOUT': 773.0, 'OK': 14414.0}",
+          "name": "classification_premise_verified",
+          "passed": true
+        },
+        {
+          "detail": "1200 of 1200 classifications returned status OK; a TIMEOUT or UNAVAILABLE would mean the arm timed a fail-open path rather than the hop it claims to time. Routing delta: {'MEDIUM->small': 1200.0}",
+          "name": "every_classification_succeeded",
+          "passed": true
+        },
+        {
+          "detail": "p50 delta vs baseline-hit@c4 is +0.069 ms. The classified arm does strictly more work than the control -- a gRPC round trip across a ClusterIP Service -- so a delta at or below zero means the arms were not what they claim to be.",
+          "name": "hop_costs_something_measurable",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "hop_delta_ms_vs_baseline": {
+          "baseline_arm": "baseline-hit@c4",
+          "max": 0.3867569999999999,
+          "note": "classified minus baseline at the same concurrency and cache mode. Both arms terminate in the same static_response and pay the same per-request connection setup, so the delta is the Praxis -> llm-d-sc hop plus llm-d-sc's work.",
+          "p50": 0.06924899999999999,
+          "p90": 0.08401799999999998,
+          "p95": 0.13494400000000004,
+          "p99": 0.365206
+        },
+        "praxis_classify_rtt_ms": {
+          "max": 67.366913,
+          "n": 16802,
+          "p50": 0.09600598392979513,
+          "p90": 43.39981869332472,
+          "p95": 49.20795335266223,
+          "p99": 52.99805761942616
+        },
+        "praxis_classify_rtt_note": "Praxis's own summary of the classify RPC, exported as pre-computed quantiles over the exporter's rolling window. In-cluster and independent of the client, but a window distribution, not a per-request join to the rows above.",
+        "praxis_classify_total_delta": 1200.0,
+        "praxis_route_delta": {
+          "MEDIUM->small": 1200.0
+        }
+      },
+      "latency_ms": {
+        "max": 1.087084,
+        "n": 1000,
+        "p50": 0.156133,
+        "p90": 0.227067,
+        "p95": 0.315854,
+        "p99": 0.635454
+      },
+      "measured_window_s": 0.29985143104568124,
+      "name": "classified-hit@c4",
+      "notes": "Cache hit. A hit does no model forward, so it isolates the network hop plus llm-d-sc's cache lookup.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "request_id -> llm_d_sc -> static_response",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "hop": "praxis -> llm-d-sc (ClusterIP Service)",
+        "measured": 1000,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+        "topology": "in-cluster-job",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 3334.9849174061596
+    }
+  ]
+}

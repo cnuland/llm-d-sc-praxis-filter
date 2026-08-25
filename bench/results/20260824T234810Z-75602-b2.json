@@ -1,0 +1,847 @@
+{
+  "manifest": {
+    "argv": [
+      "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py",
+      "--scenario",
+      "b2",
+      "--target",
+      "http://127.0.0.1:8081",
+      "--param",
+      "baseline_url=http://127.0.0.1:8080",
+      "--warmup",
+      "100",
+      "--measured",
+      "500",
+      "--concurrency",
+      "1",
+      "--topology",
+      "local-loopback"
+    ],
+    "command": "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b2 --target http://127.0.0.1:8081 --param baseline_url=http://127.0.0.1:8080 --warmup 100 --measured 500 --concurrency 1 --topology local-loopback",
+    "concurrency": [
+      1
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. Use '--' to separate paths from revisions, like this: 'git <command> [<revis",
+        "path": "/Users/cnuland/llm-d-sc-praxis-filter",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": false,
+        "error": null,
+        "path": "/Users/cnuland/llm-d-sc-genesis",
+        "sha": "821ec12983e2908bf0af8e0216ec9001d7bacaa1",
+        "untracked": 1
+      }
+    },
+    "host": {
+      "cpu": "Apple M4 Max",
+      "hostname": "cnuland-mac",
+      "logical_cores": 16,
+      "machine": "arm64",
+      "os": "macOS-26.6-arm64-arm-64bit",
+      "python": "3.11.11",
+      "python_implementation": "CPython"
+    },
+    "measured": 500,
+    "notes": [
+      "The prompt length is held constant across every size; only the surrounding JSON grows.",
+      "SPEC \u00a74.2 defaults max_body_bytes to 1 MiB, so the 1 MB arm sits at the configured ceiling. A body above it is answered 413 by design and is not part of this sweep."
+    ],
+    "params": {
+      "baseline_url": "http://127.0.0.1:8080"
+    },
+    "prompts_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/results/20260824T234810Z-75602-b2.records.jsonl",
+    "run_id": "20260824T234810Z-75602",
+    "scenario": "b2",
+    "scenario_description": "Body-size sensitivity: the cost of StreamBuffer whole-body buffering.",
+    "scenario_spec": "B-2",
+    "target": "http://127.0.0.1:8081",
+    "topology": "local-loopback",
+    "unix": 1787615332.822092,
+    "utc": "2026-08-24T23:48:52Z",
+    "warmup": 100
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1516 p90=0.1735 p95=0.1890 p99=0.2487 max=0.5438",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/500 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 1024..1024 bytes against a 1024 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.543834,
+        "n": 500,
+        "p50": 0.151625,
+        "p90": 0.173458,
+        "p95": 0.188958,
+        "p99": 0.248709
+      },
+      "measured_window_s": 0.08899787510745227,
+      "name": "baseline@1KB",
+      "notes": "No body access, so Praxis never buffers the whole body.",
+      "params": {
+        "body_bytes": 1024,
+        "body_label": "1 KB",
+        "body_mode": "Stream",
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 5618.111661613506
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=14.4041 p90=15.6600 p95=16.0862 p99=16.8786 max=26.4552",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 500/500 measured requests; full tally {'OK': 500}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "500 distinct prompt keys across 500 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 1024..1024 bytes against a 1024 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "prompt target length across every size arm: [32] (must be a single value, or the sweep varies two things at once)",
+          "name": "prompt_held_constant_across_sizes",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 26.455166,
+        "n": 500,
+        "p50": 14.404125,
+        "p90": 15.659958,
+        "p95": 16.08625,
+        "p99": 16.878625
+      },
+      "measured_window_s": 7.3234470000024885,
+      "name": "classified@1KB",
+      "notes": "StreamBuffer: the whole body is drained before routing.",
+      "params": {
+        "body_bytes": 1024,
+        "body_label": "1 KB",
+        "body_mode": "StreamBuffer",
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 68.27386065603125
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1642 p90=0.1824 p95=0.1946 p99=0.2265 max=0.2580",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/500 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 8192..8192 bytes against a 8192 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.258042,
+        "n": 500,
+        "p50": 0.164166,
+        "p90": 0.182417,
+        "p95": 0.194583,
+        "p99": 0.226458
+      },
+      "measured_window_s": 0.0999983330257237,
+      "name": "baseline@8KB",
+      "notes": "No body access, so Praxis never buffers the whole body.",
+      "params": {
+        "body_bytes": 8192,
+        "body_label": "8 KB",
+        "body_mode": "Stream",
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 5000.08335010324
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=14.4473 p90=15.3235 p95=15.6981 p99=16.1988 max=17.1410",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 500/500 measured requests; full tally {'OK': 500}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "500 distinct prompt keys across 500 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 8192..8192 bytes against a 8192 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "prompt target length across every size arm: [32] (must be a single value, or the sweep varies two things at once)",
+          "name": "prompt_held_constant_across_sizes",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 17.141,
+        "n": 500,
+        "p50": 14.44725,
+        "p90": 15.323458,
+        "p95": 15.698125,
+        "p99": 16.198792
+      },
+      "measured_window_s": 7.287639332935214,
+      "name": "classified@8KB",
+      "notes": "StreamBuffer: the whole body is drained before routing.",
+      "params": {
+        "body_bytes": 8192,
+        "body_label": "8 KB",
+        "body_mode": "StreamBuffer",
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 68.60932287638568
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.2131 p90=0.2303 p95=0.2387 p99=0.2689 max=0.4223",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/500 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 65536..65536 bytes against a 65536 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.422333,
+        "n": 500,
+        "p50": 0.213125,
+        "p90": 0.230334,
+        "p95": 0.238666,
+        "p99": 0.268917
+      },
+      "measured_window_s": 0.16359566617757082,
+      "name": "baseline@64KB",
+      "notes": "No body access, so Praxis never buffers the whole body.",
+      "params": {
+        "body_bytes": 65536,
+        "body_label": "64 KB",
+        "body_mode": "Stream",
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 3056.315681720367
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=14.5017 p90=15.4967 p95=16.0279 p99=17.2996 max=27.0102",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 500/500 measured requests; full tally {'OK': 500}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "500 distinct prompt keys across 500 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 65536..65536 bytes against a 65536 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "prompt target length across every size arm: [32] (must be a single value, or the sweep varies two things at once)",
+          "name": "prompt_held_constant_across_sizes",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 27.010167,
+        "n": 500,
+        "p50": 14.50175,
+        "p90": 15.496667,
+        "p95": 16.027875,
+        "p99": 17.299584
+      },
+      "measured_window_s": 7.386903750011697,
+      "name": "classified@64KB",
+      "notes": "StreamBuffer: the whole body is drained before routing.",
+      "params": {
+        "body_bytes": 65536,
+        "body_label": "64 KB",
+        "body_mode": "StreamBuffer",
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 67.68735818430127
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.4746 p90=0.4943 p95=0.5047 p99=0.5611 max=1.1333",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/500 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 262144..262144 bytes against a 262144 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 1.133333,
+        "n": 500,
+        "p50": 0.474625,
+        "p90": 0.494333,
+        "p95": 0.504667,
+        "p99": 0.561084
+      },
+      "measured_window_s": 0.4253698750399053,
+      "name": "baseline@256KB",
+      "notes": "No body access, so Praxis never buffers the whole body.",
+      "params": {
+        "body_bytes": 262144,
+        "body_label": "256 KB",
+        "body_mode": "Stream",
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 1175.4476029904408
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=14.8458 p90=16.1640 p95=16.4435 p99=16.8994 max=28.6346",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 500/500 measured requests; full tally {'OK': 500}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "500 distinct prompt keys across 500 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 262144..262144 bytes against a 262144 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "prompt target length across every size arm: [32] (must be a single value, or the sweep varies two things at once)",
+          "name": "prompt_held_constant_across_sizes",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 28.634583,
+        "n": 500,
+        "p50": 14.845791,
+        "p90": 16.164042,
+        "p95": 16.443458,
+        "p99": 16.899416
+      },
+      "measured_window_s": 7.7400113749317825,
+      "name": "classified@256KB",
+      "notes": "StreamBuffer: the whole body is drained before routing.",
+      "params": {
+        "body_bytes": 262144,
+        "body_label": "256 KB",
+        "body_mode": "StreamBuffer",
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 64.59938826697226
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=1.2957 p90=1.3245 p95=1.3341 p99=1.3654 max=1.5026",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/500 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 1048576..1048576 bytes against a 1048576 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 1.502625,
+        "n": 500,
+        "p50": 1.295708,
+        "p90": 1.324541,
+        "p95": 1.334084,
+        "p99": 1.365375
+      },
+      "measured_window_s": 1.345838834065944,
+      "name": "baseline@1MB",
+      "notes": "No body access, so Praxis never buffers the whole body.",
+      "params": {
+        "body_bytes": 1048576,
+        "body_label": "1 MB",
+        "body_mode": "Stream",
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 371.5155093938245
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 500 measured records, expected 500",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 500}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 500}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=15.4172 p90=16.3487 p95=16.6888 p99=17.6531 max=21.2735",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 500/500 measured requests; full tally {'OK': 500}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "500 distinct prompt keys across 500 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "request bodies ranged 1048576..1048576 bytes against a 1048576 byte target (tolerance 2%)",
+          "name": "body_size_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "prompt target length across every size arm: [32] (must be a single value, or the sweep varies two things at once)",
+          "name": "prompt_held_constant_across_sizes",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 21.2735,
+        "n": 500,
+        "p50": 15.41725,
+        "p90": 16.34875,
+        "p95": 16.688833,
+        "p99": 17.653083
+      },
+      "measured_window_s": 8.479485417017713,
+      "name": "classified@1MB",
+      "notes": "StreamBuffer: the whole body is drained before routing.",
+      "params": {
+        "body_bytes": 1048576,
+        "body_label": "1 MB",
+        "body_mode": "StreamBuffer",
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 500,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 500
+      },
+      "throughput": 58.96584231356023
+    }
+  ]
+}

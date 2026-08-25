@@ -1,0 +1,85 @@
+# Praxis configuration for the llm_d_sc routing POC (SPEC-K8S 3).
+#
+# This is the SOURCE OF TRUTH for the `praxis-config` ConfigMap and is also the
+# file the image build validates against (`praxis --validate`), so a config that
+# cannot start the proxy fails the build rather than the rollout.
+#
+# The Authorization value in the `headers` filter below carries a DS4_API_KEY
+# placeholder, substituted at pod startup by the initContainer running
+# render-config.sh from a Secret-provided environment variable. The real token is
+# never present in this file, in the ConfigMap, or anywhere in git.
+#
+# This comment deliberately does not spell the placeholder out in its literal
+# ${...} form: render-config substitutes that token ANYWHERE it appears, comments
+# included, which would write the real credential into a comment.
+
+# The admin listener carries the Kubernetes probes:
+#   GET /healthy  liveness  - 200 once the server accepts connections
+#   GET /ready    readiness - 503 if any cluster has zero healthy endpoints
+#   GET /metrics  prometheus
+# It must bind 0.0.0.0, not loopback, because the kubelet probes from outside the
+# container's network namespace. Praxis refuses a non-loopback admin bind unless
+# allow_public_admin is set, so that flag is required here rather than optional.
+# The admin port is deliberately NOT exposed through the Service or the Route.
+admin:
+  address: "0.0.0.0:9901"
+  verbose: true
+
+insecure_options:
+  allow_public_admin: true
+
+listeners:
+  - name: http
+    address: "0.0.0.0:8080"
+    filter_chains: [ai-routing]
+
+filter_chains:
+  - name: ai-routing
+    filters:
+      # Sets x-request-id, which the llm_d_sc filter reuses as the
+      # ClassifyRequest request_id so a classification can be correlated with the
+      # access-log line for the same request (SPEC 4.5).
+      - filter: request_id
+
+      # V-6 evidence: the classification metadata the filter records under
+      # llm_d_sc.* surfaces in these access-log records.
+      - filter: access_log
+
+      # The filter under test. Selects the upstream cluster from the ranked
+      # label returned by the existing llm-d-sc classifier.
+      - filter: llm_d_sc
+        endpoint: "llm-d-sc.llm-d-sc.svc.cluster.local:50051"
+        default_cluster: general
+        timeout_ms: 100
+        routes:
+          - {label: SIMPLE,    cluster: small}
+          - {label: MEDIUM,    cluster: small}
+          - {label: COMPLEX,   cluster: large}
+          - {label: REASONING, cluster: large}
+
+      # SPEC-K8S 3.1: llama-server-ds4 requires a bearer token; llama-server-qwen38
+      # has no key and returns 200 while ignoring an unexpected Authorization
+      # header. The token is therefore injected UNCONDITIONALLY here.
+      #
+      # This sends the ds4 credential to qwen38 on every SIMPLE/MEDIUM request.
+      # That is acceptable in a homelab POC and NOT acceptable in production: a
+      # misroute leaks a credential to the wrong upstream. See deploy/README.md,
+      # and praxis-config-credential-injection.yaml for a variant that does not
+      # have this property.
+      - filter: headers
+        request_set:
+          - name: "Authorization"
+            value: "Bearer ${DS4_API_KEY}"
+
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["llama-server-qwen38.homelab-maas.svc.cluster.local:80"]
+          - name: large
+            endpoints: ["llama-server-ds4.homelab-maas.svc.cluster.local:8080"]
+          # The fail-open target. Points at the SMALL model on purpose: if the
+          # classifier is unavailable, unclassified traffic should land on the
+          # cheaper, faster backend rather than the 284 B one. The opposite
+          # choice is equally defensible; see deploy/README.md.
+          - name: general
+            endpoints: ["llama-server-qwen38.homelab-maas.svc.cluster.local:80"]

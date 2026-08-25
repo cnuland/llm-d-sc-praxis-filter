@@ -1,0 +1,20 @@
+# Edge-terminated TLS, so the benchmark driver and ad-hoc curls can reach the
+# proxy from the laptop. TLS stops at the router; in-cluster traffic to the
+# Service is plain HTTP, which is what the Praxis listener speaks.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: praxis
+  labels:
+    app.kubernetes.io/name: praxis
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+spec:
+  to:
+    kind: Service
+    name: praxis
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

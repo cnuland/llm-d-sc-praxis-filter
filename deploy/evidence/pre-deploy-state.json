@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "capturedAt": "2026-08-24T23:00:07Z",
+    "note": "Only .namespaces is compared by teardown; .meta is volatile by design.",
+    "schemaVersion": 1,
+    "server": "https://api.ironman.cjlabs.dev:6443",
+    "user": "kube:admin"
+  },
+  "namespaces": {
+    "homelab-maas": {
+      "deployments": [
+        {
+          "availableReplicas": 1,
+          "images": [
+            "ghcr.io/nathanw1014/strix-halo-llamacpp:vulkan"
+          ],
+          "name": "llama-server-ds4",
+          "readyReplicas": 1,
+          "replicas": 1,
+          "updatedReplicas": 1
+        },
+        {
+          "availableReplicas": 0,
+          "images": [
+            "image-registry.openshift-image-registry.svc:5000/homelab-maas/llamacpp-laguna-vulkan:latest"
+          ],
+          "name": "llama-server-laguna",
+          "readyReplicas": 0,
+          "replicas": 0,
+          "updatedReplicas": 0
+        },
+        {
+          "availableReplicas": 0,
+          "images": [
+            "ghcr.io/ggml-org/llama.cpp:full-vulkan"
+          ],
+          "name": "llama-server-qwen36",
+          "readyReplicas": 0,
+          "replicas": 0,
+          "updatedReplicas": 0
+        },
+        {
+          "availableReplicas": 1,
+          "images": [
+            "ghcr.io/ggml-org/llama.cpp:full-vulkan"
+          ],
+          "name": "llama-server-qwen38",
+          "readyReplicas": 1,
+          "replicas": 1,
+          "updatedReplicas": 1
+        },
+        {
+          "availableReplicas": 0,
+          "images": [
+            "curlimages/curl:latest",
+            "quay.io/cnuland/vulkan-ollama:latest"
+          ],
+          "name": "ollama-qwen36",
+          "readyReplicas": 0,
+          "replicas": 0,
+          "updatedReplicas": 0
+        },
+        {
+          "availableReplicas": 1,
+          "images": [
+            "quay.io/cnuland/vllm-semantic-claw-router:latest"
+          ],
+          "name": "semantic-claw-router",
+          "readyReplicas": 1,
+          "replicas": 1,
+          "updatedReplicas": 1
+        }
+      ],
+      "services": [
+        {
+          "clusterIP": "172.30.212.46",
+          "name": "llama-server-ds4",
+          "ports": [
+            {
+              "name": "http",
+              "port": 8080,
+              "protocol": "TCP",
+              "targetPort": "8080"
+            }
+          ],
+          "type": "ClusterIP"
+        },
+        {
+          "clusterIP": "172.30.53.183",
+          "name": "llama-server-laguna",
+          "ports": [
+            {
+              "name": "http",
+              "port": 8080,
+              "protocol": "TCP",
+              "targetPort": "8080"
+            }
+          ],
+          "type": "ClusterIP"
+        },
+        {
+          "clusterIP": "172.30.2.99",
+          "name": "llama-server-qwen36",
+          "ports": [
+            {
+              "name": "http",
+              "port": 8080,
+              "protocol": "TCP",
+              "targetPort": "http"
+            }
+          ],
+          "type": "ClusterIP"
+        },
+        {
+          "clusterIP": "172.30.51.135",
+          "name": "llama-server-qwen38",
+          "ports": [
+            {
+              "name": "http",
+              "port": 80,
+              "protocol": "TCP",
+              "targetPort": "8080"
+            }
+          ],
+          "type": "ClusterIP"
+        },
+        {
+          "clusterIP": "172.30.139.163",
+          "name": "ollama-qwen36",
+          "ports": [
+            {
+              "name": "http",
+              "port": 11434,
+              "protocol": "TCP",
+              "targetPort": "http"
+            }
+          ],
+          "type": "ClusterIP"
+        },
+        {
+          "clusterIP": "172.30.65.225",
+          "name": "semantic-claw-router",
+          "ports": [
+            {
+              "name": "http",
+              "port": 8080,
+              "protocol": "TCP",
+              "targetPort": "http"
+            }
+          ],
+          "type": "ClusterIP"
+        }
+      ]
+    },
+    "llm-d-sc": {
+      "deployments": [
+        {
+          "availableReplicas": 1,
+          "images": [
+            "image-registry.openshift-image-registry.svc:5000/llm-d-sc/llm-d-sc@sha256:b5aea3c295da49960cbd4ab17f9dd9648fc128974c936c1d961915c480a5f50c"
+          ],
+          "name": "llm-d-sc",
+          "readyReplicas": 1,
+          "replicas": 1,
+          "updatedReplicas": 1
+        }
+      ],
+      "services": [
+        {
+          "clusterIP": "172.30.122.123",
+          "name": "llm-d-sc",
+          "ports": [
+            {
+              "name": "grpc",
+              "port": 50051,
+              "protocol": "TCP",
+              "targetPort": "50051"
+            }
+          ],
+          "type": "ClusterIP"
+        }
+      ]
+    }
+  }
+}

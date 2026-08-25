@@ -1,0 +1,39 @@
+# Static resources plus the ConfigMaps generated from deploy/config/.
+#
+# NOT included here: the `ds4-api-key` Secret. It is created imperatively by
+# hack/deploy-cluster.sh from the live homelab-maas secret, precisely so that no
+# file in this repository ever holds the credential.
+#
+# `oc apply -k deploy/` therefore produces everything except that Secret. Prefer
+# hack/deploy-cluster.sh, which does both and then runs the verification ladder.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: praxis-poc
+
+resources:
+  - 00-namespace.yaml
+  - 10-imagestream.yaml
+  - 20-buildconfig.yaml
+  - 30-deployment.yaml
+  - 40-service.yaml
+  - 50-route.yaml
+
+# Stable names: the Deployment references `praxis-config` directly, and the
+# deploy script swaps that ConfigMap's contents to switch config variants.
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+
+configMapGenerator:
+  # The live config. deploy/config/praxis-config.yaml is the single source of
+  # truth: the same file is validated inside the image build.
+  - name: praxis-config
+    files:
+      - praxis.yaml=config/praxis-config.yaml
+  # V-5 fail-open evidence, mounted only when explicitly selected. Points the
+  # filter at a dead endpoint instead of scaling the shared classifier.
+  - name: praxis-config-classifier-down
+    files:
+      - praxis.yaml=config/praxis-config-classifier-down.yaml

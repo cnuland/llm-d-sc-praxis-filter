@@ -1,0 +1,23 @@
+# Data plane only.
+#
+# Port 9901 (the Praxis admin listener: /healthy, /ready, /metrics) is
+# deliberately NOT published here. That listener has no authentication - Praxis
+# requires insecure_options.allow_public_admin to bind it off-loopback at all -
+# so it is reachable only by the kubelet for probes and by `oc port-forward` for
+# debugging, never through the Service or the Route.
+apiVersion: v1
+kind: Service
+metadata:
+  name: praxis
+  labels:
+    app.kubernetes.io/name: praxis
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: praxis
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

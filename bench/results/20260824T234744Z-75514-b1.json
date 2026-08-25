@@ -1,0 +1,708 @@
+{
+  "manifest": {
+    "argv": [
+      "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py",
+      "--scenario",
+      "b1",
+      "--target",
+      "http://127.0.0.1:8081",
+      "--param",
+      "baseline_url=http://127.0.0.1:8080",
+      "--warmup",
+      "200",
+      "--measured",
+      "1000",
+      "--concurrency",
+      "1,4,16",
+      "--topology",
+      "local-loopback"
+    ],
+    "command": "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b1 --target http://127.0.0.1:8081 --param baseline_url=http://127.0.0.1:8080 --warmup 200 --measured 1000 --concurrency 1,4,16 --topology local-loopback",
+    "concurrency": [
+      1,
+      4,
+      16
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. Use '--' to separate paths from revisions, like this: 'git <command> [<revis",
+        "path": "/Users/cnuland/llm-d-sc-praxis-filter",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": false,
+        "error": null,
+        "path": "/Users/cnuland/llm-d-sc-genesis",
+        "sha": "821ec12983e2908bf0af8e0216ec9001d7bacaa1",
+        "untracked": 1
+      }
+    },
+    "host": {
+      "cpu": "Apple M4 Max",
+      "hostname": "cnuland-mac",
+      "logical_cores": 16,
+      "machine": "arm64",
+      "os": "macOS-26.6-arm64-arm-64bit",
+      "python": "3.11.11",
+      "python_implementation": "CPython"
+    },
+    "measured": 1000,
+    "notes": [
+      "Upstream is a local instant-return stub, so the delta between arms is the filter and the fabric it sits on, not the backend.",
+      "Run locally (no cluster network): B-1 measures the filter, not the fabric.",
+      "The baseline and classified arms are separate Praxis listeners because SPEC \u00a72.2 makes `router` and `llm_d_sc` mutually exclusive in one chain."
+    ],
+    "params": {
+      "baseline_url": "http://127.0.0.1:8080"
+    },
+    "prompts_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/results/20260824T234744Z-75514-b1.records.jsonl",
+    "run_id": "20260824T234744Z-75514",
+    "scenario": "b1",
+    "scenario_description": "Filter overhead at the proxy: baseline vs classified-miss vs classified-hit.",
+    "scenario_spec": "B-1",
+    "target": "http://127.0.0.1:8081",
+    "topology": "local-loopback",
+    "unix": 1787615289.8859131,
+    "utc": "2026-08-24T23:48:09Z",
+    "warmup": 200
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1448 p90=0.1559 p95=0.1604 p99=0.1709 max=0.4958",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/1000 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.49575,
+        "n": 1000,
+        "p50": 0.144833,
+        "p90": 0.155917,
+        "p95": 0.160375,
+        "p99": 0.170875
+      },
+      "measured_window_s": 0.16260675014927983,
+      "name": "baseline@c1",
+      "notes": "Praxis with static routing; no body access, no gRPC.",
+      "params": {
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 6149.806198586209
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=14.0987 p90=15.0697 p95=15.4057 p99=16.0976 max=20.8690",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 1000/1000 measured requests; full tally {'OK': 1000}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "SPEC-BENCH \u00a70 rule 2 forbids a cost figure without a comparable before/after. baseline@c1 captured, delta is computable.",
+          "name": "baseline_arm_present_for_delta",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 20.868958,
+        "n": 1000,
+        "p50": 14.098667,
+        "p90": 15.069667,
+        "p95": 15.40575,
+        "p99": 16.097625
+      },
+      "measured_window_s": 14.2129012090154,
+      "name": "classified-miss@c1",
+      "notes": "Unique prompt per request: full cost including llm-d-sc's model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 70.35861189027959
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.2148 p90=0.2288 p95=0.2343 p99=0.2481 max=0.5565",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 1000/1000 measured requests; full tally {'OK': 1000}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "hit p50 0.215 ms vs miss p50 14.099 ms (ratio 0.015, must be <= 0.50). A ratio near 1 means llm-d-sc's cache never engaged and the arms are not measuring what they claim.",
+          "name": "hit_is_dramatically_cheaper_than_miss",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.556542,
+        "n": 1000,
+        "p50": 0.214792,
+        "p90": 0.22875,
+        "p95": 0.234333,
+        "p99": 0.248125
+      },
+      "measured_window_s": 0.23248037486337125,
+      "name": "classified-hit@c1",
+      "notes": "One repeated prompt: llm-d-sc's versioned result cache is hot.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 4301.4383497432855
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.2978 p90=0.4628 p95=0.5016 p99=0.6191 max=0.7970",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/1000 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.797041,
+        "n": 1000,
+        "p50": 0.29775,
+        "p90": 0.462833,
+        "p95": 0.501625,
+        "p99": 0.619084
+      },
+      "measured_window_s": 0.08374379202723503,
+      "name": "baseline@c4",
+      "notes": "Praxis with static routing; no body access, no gRPC.",
+      "params": {
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 11941.183648273074
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=15.6165 p90=18.0953 p95=18.9330 p99=21.2414 max=25.5772",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 1000/1000 measured requests; full tally {'OK': 1000}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "SPEC-BENCH \u00a70 rule 2 forbids a cost figure without a comparable before/after. baseline@c4 captured, delta is computable.",
+          "name": "baseline_arm_present_for_delta",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 25.57725,
+        "n": 1000,
+        "p50": 15.616458,
+        "p90": 18.095292,
+        "p95": 18.933,
+        "p99": 21.241375
+      },
+      "measured_window_s": 4.015861333115026,
+      "name": "classified-miss@c4",
+      "notes": "Unique prompt per request: full cost including llm-d-sc's model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 249.01258212128536
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.3591 p90=0.5212 p95=0.5932 p99=0.7139 max=0.8535",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 1000/1000 measured requests; full tally {'OK': 1000}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "hit p50 0.359 ms vs miss p50 15.616 ms (ratio 0.023, must be <= 0.50). A ratio near 1 means llm-d-sc's cache never engaged and the arms are not measuring what they claim.",
+          "name": "hit_is_dramatically_cheaper_than_miss",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.853459,
+        "n": 1000,
+        "p50": 0.359084,
+        "p90": 0.52125,
+        "p95": 0.593209,
+        "p99": 0.713916
+      },
+      "measured_window_s": 0.10162354214116931,
+      "name": "classified-hit@c4",
+      "notes": "One repeated prompt: llm-d-sc's versioned result cache is hot.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 9840.239563888259
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=1.2706 p90=2.5727 p95=3.0697 p99=3.9460 max=5.1335",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "0/1000 baseline responses carried x-llm-d-sc-* provenance (expected 0; a non-zero count means the baseline arm went through the filter and the delta is meaningless)",
+          "name": "baseline_is_unclassified",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 5.133459,
+        "n": 1000,
+        "p50": 1.270583,
+        "p90": 2.572667,
+        "p95": 3.069667,
+        "p99": 3.946
+      },
+      "measured_window_s": 0.09117404208518565,
+      "name": "baseline@c16",
+      "notes": "Praxis with static routing; no body access, no gRPC.",
+      "params": {
+        "cache_mode": "n/a",
+        "chain": "router -> load_balancer",
+        "concurrency": 16,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8080",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 10968.034071207252
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=60.1591 p90=62.6071 p95=63.4365 p99=66.6151 max=69.9407",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 1000/1000 measured requests; full tally {'OK': 1000}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "1000 distinct prompt keys across 1000 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        },
+        {
+          "detail": "SPEC-BENCH \u00a70 rule 2 forbids a cost figure without a comparable before/after. baseline@c16 captured, delta is computable.",
+          "name": "baseline_arm_present_for_delta",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 69.94075,
+        "n": 1000,
+        "p50": 60.159125,
+        "p90": 62.607083,
+        "p95": 63.436459,
+        "p99": 66.615125
+      },
+      "measured_window_s": 3.784603541949764,
+      "name": "classified-miss@c16",
+      "notes": "Unique prompt per request: full cost including llm-d-sc's model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 16,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 264.2284690894774
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 1000 measured records, expected 1000",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 1000}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 1000}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "200 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=1.5601 p90=2.6746 p95=3.0330 p99=4.2094 max=5.7204",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 1000/1000 measured requests; full tally {'OK': 1000}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "1 distinct prompt keys across 1000 measured requests (expected exactly 1)",
+          "name": "hit_arm_uses_one_key",
+          "passed": true
+        },
+        {
+          "detail": "hit p50 1.560 ms vs miss p50 60.159 ms (ratio 0.026, must be <= 0.50). A ratio near 1 means llm-d-sc's cache never engaged and the arms are not measuring what they claim.",
+          "name": "hit_is_dramatically_cheaper_than_miss",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 5.720417,
+        "n": 1000,
+        "p50": 1.560083,
+        "p90": 2.674625,
+        "p95": 3.033042,
+        "p99": 4.209375
+      },
+      "measured_window_s": 0.10570720909163356,
+      "name": "classified-hit@c16",
+      "notes": "One repeated prompt: llm-d-sc's versioned result cache is hot.",
+      "params": {
+        "cache_mode": "hit",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 16,
+        "expected_status": [
+          200
+        ],
+        "measured": 1000,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 200
+      },
+      "status_counts": {
+        "200": 1000
+      },
+      "throughput": 9460.092727764084
+    }
+  ]
+}

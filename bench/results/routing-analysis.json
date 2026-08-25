@@ -1,0 +1,90 @@
+{
+  "boundary": {
+    "correct": 3,
+    "n": 8
+  },
+  "confidence": {
+    "correct": {
+      "max": 0.9996,
+      "median": 0.99755,
+      "min": 0.5803,
+      "n": 36
+    },
+    "misrouted": {
+      "max": 0.9993,
+      "median": 0.99195,
+      "min": 0.8662,
+      "n": 28
+    },
+    "separable": false
+  },
+  "confusion": {
+    "COMPLEX": {
+      "large": 16,
+      "small": 16
+    },
+    "MEDIUM": {
+      "large": 1,
+      "small": 31
+    },
+    "REASONING": {
+      "large": 20,
+      "small": 12
+    },
+    "SIMPLE": {
+      "small": 32
+    }
+  },
+  "label_confusion": {
+    "COMPLEX": {
+      "COMPLEX": 15,
+      "MEDIUM": 16,
+      "REASONING": 1
+    },
+    "MEDIUM": {
+      "MEDIUM": 23,
+      "REASONING": 1,
+      "SIMPLE": 8
+    },
+    "REASONING": {
+      "MEDIUM": 10,
+      "REASONING": 20,
+      "SIMPLE": 2
+    },
+    "SIMPLE": {
+      "MEDIUM": 2,
+      "SIMPLE": 30
+    }
+  },
+  "mappings": {
+    "MEDIUM->large  (safety-biased)": {
+      "accuracy": 0.78125,
+      "correct": 100,
+      "n": 128,
+      "quality_risk": 0.015625,
+      "risk_count": 2,
+      "wasted_capacity": 0.203125,
+      "wasted_count": 26
+    },
+    "MEDIUM->small  (as deployed)": {
+      "accuracy": 0.7734375,
+      "correct": 99,
+      "n": 128,
+      "quality_risk": 0.21875,
+      "risk_count": 28,
+      "wasted_capacity": 0.0078125,
+      "wasted_count": 1
+    },
+    "only REASONING->large (cost-biased)": {
+      "accuracy": 0.65625,
+      "correct": 84,
+      "n": 128,
+      "quality_risk": 0.3359375,
+      "risk_count": 43,
+      "wasted_capacity": 0.0078125,
+      "wasted_count": 1
+    }
+  },
+  "measured": 128,
+  "records": "/Users/cnuland/llm-d-sc-praxis-filter/bench/results/20260824T235018Z-75925-b4.records.jsonl"
+}

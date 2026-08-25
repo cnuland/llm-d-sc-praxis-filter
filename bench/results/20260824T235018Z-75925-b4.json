@@ -1,0 +1,1577 @@
+{
+  "manifest": {
+    "argv": [
+      "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py",
+      "--scenario",
+      "b4",
+      "--target",
+      "http://127.0.0.1:8081",
+      "--warmup",
+      "20",
+      "--concurrency",
+      "1",
+      "--topology",
+      "local-loopback"
+    ],
+    "command": "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b4 --target http://127.0.0.1:8081 --warmup 20 --concurrency 1 --topology local-loopback",
+    "concurrency": [
+      1
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. Use '--' to separate paths from revisions, like this: 'git <command> [<revis",
+        "path": "/Users/cnuland/llm-d-sc-praxis-filter",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": false,
+        "error": null,
+        "path": "/Users/cnuland/llm-d-sc-genesis",
+        "sha": "821ec12983e2908bf0af8e0216ec9001d7bacaa1",
+        "untracked": 1
+      }
+    },
+    "host": {
+      "cpu": "Apple M4 Max",
+      "hostname": "cnuland-mac",
+      "logical_cores": 16,
+      "machine": "arm64",
+      "os": "macOS-26.6-arm64-arm-64bit",
+      "python": "3.11.11",
+      "python_implementation": "CPython"
+    },
+    "leakage_check": {
+      "anchor_count": 138,
+      "clean": true,
+      "comparisons": 17664,
+      "limits": {
+        "content_containment": 0.75,
+        "content_jaccard": 0.6,
+        "full_containment": 0.8,
+        "full_jaccard": 0.6
+      },
+      "max_containment_observed": 0.5,
+      "max_full_containment_observed": 0.7143,
+      "max_full_jaccard_observed": 0.5556,
+      "max_jaccard_observed": 0.3333,
+      "near_duplicates": 0,
+      "verbatim_overlaps": 0
+    },
+    "measured": 300,
+    "notes": [
+      "Prompt set is held out from the classifier anchors; leakage is asserted before the run builds its arms, not after the numbers exist.",
+      "Upstreams may be stubs: this measures the routing decision, not generation.",
+      "Attribution requires the upstream to echo x-llm-d-sc-* headers, and is cross-checked against the upstream's own response model field."
+    ],
+    "params": {},
+    "prompts_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/results/20260824T235018Z-75925-b4.records.jsonl",
+    "run_id": "20260824T235018Z-75925",
+    "scenario": "b4",
+    "scenario_description": "Routing correctness over a held-out labelled prompt set: does the right prompt reach the right tier?",
+    "scenario_spec": "B-4",
+    "target": "http://127.0.0.1:8081",
+    "topology": "local-loopback",
+    "unix": 1787615420.5624242,
+    "utc": "2026-08-24T23:50:20Z",
+    "warmup": 20
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 128 measured records, expected 128",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 128}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 128}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "20 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=10.1433 p90=12.8386 p95=13.3972 p99=14.4099 max=14.5130",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status tally {'OK': 128}; intended ['OK'] on 128/128 requests. A non-intended status is a real finding, but it must be declared: re-run with --param expect_status=OK,ABSTAIN to record it deliberately.",
+          "name": "classification_status_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "0/128 requests where the x-llm-d-sc provenance and the upstream's own model field disagreed about which cluster served them",
+          "name": "attribution_sources_agree",
+          "passed": true
+        },
+        {
+          "detail": "0/128 requests could not be attributed to a cluster from either source. Start the stub upstreams with --echo-sc-headers, or add --param model_map=<id>=<cluster>.",
+          "name": "every_request_attributed",
+          "passed": true
+        },
+        {
+          "detail": "0 warmup requests used a held-out prompt (expected 0; warmup runs in a disjoint synthetic namespace so the measured pass is a genuine first encounter)",
+          "name": "warmup_did_not_prewarm_heldout_prompts",
+          "passed": true
+        },
+        {
+          "detail": "128/128 held-out prompts appear in the measured window",
+          "name": "every_heldout_prompt_measured",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "boundary": {
+          "accuracy": 0.375,
+          "correct": 3,
+          "total": 8
+        },
+        "classes": [
+          "SIMPLE",
+          "MEDIUM",
+          "COMPLEX",
+          "REASONING"
+        ],
+        "clusters": [
+          "general",
+          "large",
+          "small",
+          "unattributed"
+        ],
+        "confusion": {
+          "COMPLEX": {
+            "general": 0,
+            "large": 16,
+            "small": 16,
+            "unattributed": 0
+          },
+          "MEDIUM": {
+            "general": 0,
+            "large": 1,
+            "small": 31,
+            "unattributed": 0
+          },
+          "REASONING": {
+            "general": 0,
+            "large": 20,
+            "small": 12,
+            "unattributed": 0
+          },
+          "SIMPLE": {
+            "general": 0,
+            "large": 0,
+            "small": 32,
+            "unattributed": 0
+          }
+        },
+        "label_confusion": {
+          "COMPLEX": {
+            "<none>": 0,
+            "COMPLEX": 15,
+            "MEDIUM": 16,
+            "REASONING": 1,
+            "SIMPLE": 0
+          },
+          "MEDIUM": {
+            "<none>": 0,
+            "COMPLEX": 0,
+            "MEDIUM": 23,
+            "REASONING": 1,
+            "SIMPLE": 8
+          },
+          "REASONING": {
+            "<none>": 0,
+            "COMPLEX": 0,
+            "MEDIUM": 10,
+            "REASONING": 20,
+            "SIMPLE": 2
+          },
+          "SIMPLE": {
+            "<none>": 0,
+            "COMPLEX": 0,
+            "MEDIUM": 2,
+            "REASONING": 0,
+            "SIMPLE": 30
+          }
+        },
+        "misroutes": {
+          "complex_to_small_quality_risk": 16,
+          "medium_to_large_wasted_capacity": 1,
+          "reasoning_to_small_quality_risk": 12,
+          "simple_to_large_wasted_capacity": 0,
+          "to_general_unrouted": 0
+        },
+        "per_class": {
+          "COMPLEX": {
+            "f1": 0.6382978723404256,
+            "precision": 1.0,
+            "recall": 0.46875,
+            "support": 32
+          },
+          "MEDIUM": {
+            "f1": 0.5542168674698795,
+            "precision": 0.45098039215686275,
+            "recall": 0.71875,
+            "support": 32
+          },
+          "REASONING": {
+            "f1": 0.7407407407407406,
+            "precision": 0.9090909090909091,
+            "recall": 0.625,
+            "support": 32
+          },
+          "SIMPLE": {
+            "f1": 0.8333333333333334,
+            "precision": 0.75,
+            "recall": 0.9375,
+            "support": 32
+          }
+        },
+        "per_prompt": [
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.84975,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-001"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.481917,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-002"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.602042,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-003"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 9.313875,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-004"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.153875,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-005"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.167208,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-006"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.559792,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-007"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.497958,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-008"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.891458,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-009"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.193334,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-010"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.547083,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-011"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.001084,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-012"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.326083,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-013"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.420334,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-simple-014"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.704125,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-015"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.627,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-016"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.62175,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-017"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.349042,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-018"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.137084,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-019"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.860334,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-020"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.859542,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-021"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 9.474708,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-022"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.9485,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-023"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 9.28975,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-024"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.717625,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-025"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 6.868417,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-026"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.101584,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-027"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.14975,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-simple-028"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.540125,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-029"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 7.382333,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-030"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.778125,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-031"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "SIMPLE",
+            "latency_ms": 8.287833,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-simple-032"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.257958,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-001"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 11.102583,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-002"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.75075,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-003"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.650666,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-004"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.13575,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-005"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.861375,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-006"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.376833,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-007"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 11.427208,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-008"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.832459,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-009"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 10.505667,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-010"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.882,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-011"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.023208,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-012"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.931625,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-013"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.487208,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-014"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.313833,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-015"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 11.561625,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-016"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.757542,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-017"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.753208,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-018"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.255875,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-019"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.589458,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-020"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.201667,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-021"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.747667,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-022"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 10.719916,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-023"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.407625,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-024"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 7.805917,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-025"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.438208,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-026"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 11.044041,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-027"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.601916,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-028"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 9.186291,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-029"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 8.432875,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-medium-030"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": true,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 6.776083,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-medium-031"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": true,
+            "correct": false,
+            "expected_cluster": "small",
+            "intended_label": "MEDIUM",
+            "latency_ms": 14.409875,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-medium-032"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 9.897375,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-001"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.14325,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-002"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.008458,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-003"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.362458,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-004"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 9.912625,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-005"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.345209,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-006"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.828125,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-007"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.682875,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-008"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.610875,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-009"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 12.181708,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-010"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.475417,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-011"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.146375,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-012"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.667917,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-013"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 12.460292,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-014"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.988375,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-015"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.892208,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-016"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.454292,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-017"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 10.969542,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-018"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.815375,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-019"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.1805,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-020"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.029,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-021"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.33075,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-022"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 12.643208,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-complex-023"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 13.204458,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-024"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 11.872291,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-025"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 14.513,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-026"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 12.662792,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-027"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 13.204875,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-028"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 13.416833,
+            "observed_label": "COMPLEX",
+            "prompt_id": "hp-complex-029"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 12.718584,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-030"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 12.001625,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-031"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "COMPLEX",
+            "latency_ms": 13.326958,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-complex-032"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 13.709709,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-001"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.5585,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-002"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.363208,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-003"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.686375,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-004"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.656542,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-005"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.67075,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-006"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 13.397208,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-007"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.230041,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-008"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.497959,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-009"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.827375,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-010"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.010959,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-011"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.409667,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-reasoning-012"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.605458,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-013"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.536584,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-014"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.183709,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-015"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 13.264083,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-016"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.838625,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-017"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 13.650917,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-018"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.150292,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-019"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.320375,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-020"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.624583,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-021"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.868,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-022"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 13.457125,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-023"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 11.772209,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-024"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 9.054083,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-025"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 9.2325,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-026"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.033792,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-027"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 12.270625,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-028"
+          },
+          {
+            "actual_cluster": "large",
+            "boundary": false,
+            "correct": true,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.886833,
+            "observed_label": "REASONING",
+            "prompt_id": "hp-reasoning-029"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": false,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 9.641583,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-030"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.668166,
+            "observed_label": "SIMPLE",
+            "prompt_id": "hp-reasoning-031"
+          },
+          {
+            "actual_cluster": "small",
+            "boundary": true,
+            "correct": false,
+            "expected_cluster": "large",
+            "intended_label": "REASONING",
+            "latency_ms": 10.26475,
+            "observed_label": "MEDIUM",
+            "prompt_id": "hp-reasoning-032"
+          }
+        ],
+        "routing_accuracy": 0.7734375,
+        "routing_correct": 99,
+        "routing_total": 128
+      },
+      "latency_ms": {
+        "max": 14.513,
+        "n": 128,
+        "p50": 10.14325,
+        "p90": 12.838625,
+        "p95": 13.397208,
+        "p99": 14.409875
+      },
+      "measured_window_s": 1.3092907909303904,
+      "name": "routing-heldout",
+      "notes": "One pass over the held-out set; warmup uses a disjoint synthetic namespace.",
+      "params": {
+        "cache_mode": "n/a",
+        "concurrency": 1,
+        "expect_status": [
+          "OK"
+        ],
+        "expected_status": [
+          200
+        ],
+        "label_to_cluster": {
+          "COMPLEX": "large",
+          "MEDIUM": "small",
+          "REASONING": "large",
+          "SIMPLE": "small"
+        },
+        "leakage_check": "OK: zero verbatim overlap, zero near-duplicates, schema valid.",
+        "measured": 128,
+        "model_to_cluster": {
+          "ds4-flash-0731": "large",
+          "general-stub": "general",
+          "large-stub": "large",
+          "qwen38-27b": "small",
+          "small-stub": "small"
+        },
+        "prompts": 128,
+        "repeats": 1,
+        "requests": 128,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 20
+      },
+      "status_counts": {
+        "200": 128
+      },
+      "throughput": 97.76285061093448
+    }
+  ]
+}

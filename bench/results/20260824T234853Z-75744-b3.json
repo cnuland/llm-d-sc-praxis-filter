@@ -1,0 +1,840 @@
+{
+  "manifest": {
+    "argv": [
+      "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py",
+      "--scenario",
+      "b3",
+      "--target",
+      "http://127.0.0.1:8081",
+      "--warmup",
+      "100",
+      "--measured",
+      "300",
+      "--concurrency",
+      "1,4",
+      "--topology",
+      "local-loopback"
+    ],
+    "command": "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b3 --target http://127.0.0.1:8081 --warmup 100 --measured 300 --concurrency 1,4 --topology local-loopback",
+    "concurrency": [
+      1,
+      4
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. Use '--' to separate paths from revisions, like this: 'git <command> [<revis",
+        "path": "/Users/cnuland/llm-d-sc-praxis-filter",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": false,
+        "error": null,
+        "path": "/Users/cnuland/llm-d-sc-genesis",
+        "sha": "821ec12983e2908bf0af8e0216ec9001d7bacaa1",
+        "untracked": 1
+      }
+    },
+    "host": {
+      "cpu": "Apple M4 Max",
+      "hostname": "cnuland-mac",
+      "logical_cores": 16,
+      "machine": "arm64",
+      "os": "macOS-26.6-arm64-arm-64bit",
+      "python": "3.11.11",
+      "python_implementation": "CPython"
+    },
+    "measured": 300,
+    "notes": [
+      "Lengths mirror llm-d-sc's own performance table so the two are directly comparable.",
+      "Token counts are approximate (one bank word treated as one token); the records file carries actual word and character counts.",
+      "SPEC \u00a74.2 truncates the classified text at max_prompt_chars (default 4096). The 512-token arm sits well inside that, so no arm here is silently truncated."
+    ],
+    "params": {},
+    "prompts_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/results/20260824T234853Z-75744-b3.records.jsonl",
+    "run_id": "20260824T234853Z-75744",
+    "scenario": "b3",
+    "scenario_description": "Prompt-length sensitivity at 32/64/128/256/512 tokens, cache-miss.",
+    "scenario_spec": "B-3",
+    "target": "http://127.0.0.1:8081",
+    "topology": "local-loopback",
+    "unix": 1787615418.494024,
+    "utc": "2026-08-24T23:50:18Z",
+    "warmup": 100
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=14.7265 p90=16.0146 p95=16.2982 p99=16.7604 max=16.9277",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [29] words (~32 tokens targeted); character length 202..204",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 16.927666,
+        "n": 300,
+        "p50": 14.726542,
+        "p90": 16.014583,
+        "p95": 16.298208,
+        "p99": 16.760416
+      },
+      "measured_window_s": 4.477821207838133,
+      "name": "classified-miss@32tok-c1",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 66.99686880638951
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=18.6582 p90=19.6275 p95=20.2551 p99=21.1904 max=24.4060",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [61] words (~64 tokens targeted); character length 356..358",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 24.406041,
+        "n": 300,
+        "p50": 18.65825,
+        "p90": 19.6275,
+        "p95": 20.255083,
+        "p99": 21.190417
+      },
+      "measured_window_s": 5.651209000032395,
+      "name": "classified-miss@64tok-c1",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 64,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 53.085985671080344
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=38.6125 p90=40.4505 p95=41.4042 p99=43.7726 max=47.2808",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [125] words (~128 tokens targeted); character length 669..671",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 47.280791,
+        "n": 300,
+        "p50": 38.6125,
+        "p90": 40.450459,
+        "p95": 41.404208,
+        "p99": 43.772584
+      },
+      "measured_window_s": 11.65008204197511,
+      "name": "classified-miss@128tok-c1",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 128,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 25.750891617681617
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=52.9676 p90=55.3893 p95=56.3204 p99=63.0343 max=68.9853",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [253] words (~256 tokens targeted); character length 1294..1296",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 68.985334,
+        "n": 300,
+        "p50": 52.967625,
+        "p90": 55.389292,
+        "p95": 56.320417,
+        "p99": 63.034292
+      },
+      "measured_window_s": 16.043864083942026,
+      "name": "classified-miss@256tok-c1",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 256,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 18.698737313554272
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=53.0924 p90=56.5156 p95=57.5300 p99=60.5389 max=64.1157",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [509] words (~512 tokens targeted); character length 2539..2541",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 64.115667,
+        "n": 300,
+        "p50": 53.092417,
+        "p90": 56.515625,
+        "p95": 57.530041,
+        "p99": 60.538917
+      },
+      "measured_window_s": 16.107944124843925,
+      "name": "classified-miss@512tok-c1",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 512,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 18.624350672864455
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=16.3014 p90=17.4516 p95=17.8479 p99=19.1955 max=22.0045",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [29] words (~32 tokens targeted); character length 202..204",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 22.004459,
+        "n": 300,
+        "p50": 16.301416,
+        "p90": 17.451583,
+        "p95": 17.847916,
+        "p99": 19.195458
+      },
+      "measured_window_s": 1.2384372921660542,
+      "name": "classified-miss@32tok-c4",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 32,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 242.24076737490145
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=21.4745 p90=22.7484 p95=23.0623 p99=24.0611 max=24.9706",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [61] words (~64 tokens targeted); character length 356..358",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 24.970584,
+        "n": 300,
+        "p50": 21.474542,
+        "p90": 22.748417,
+        "p95": 23.062291,
+        "p99": 24.061125
+      },
+      "measured_window_s": 1.6179656249005347,
+      "name": "classified-miss@64tok-c4",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 64,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 185.4180307560259
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=40.3122 p90=42.1102 p95=42.8095 p99=44.4964 max=45.6478",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [125] words (~128 tokens targeted); character length 669..671",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 45.647833,
+        "n": 300,
+        "p50": 40.31225,
+        "p90": 42.110208,
+        "p95": 42.809459,
+        "p99": 44.496375
+      },
+      "measured_window_s": 3.0355315839406103,
+      "name": "classified-miss@128tok-c4",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 128,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 98.82947737626618
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=61.8287 p90=64.3598 p95=66.2064 p99=68.3473 max=71.4775",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [253] words (~256 tokens targeted); character length 1294..1296",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 71.477459,
+        "n": 300,
+        "p50": 61.82875,
+        "p90": 64.359791,
+        "p95": 66.206417,
+        "p99": 68.347333
+      },
+      "measured_window_s": 4.6601892919279635,
+      "name": "classified-miss@256tok-c4",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 256,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 64.37506745050848
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "100 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=62.4417 p90=65.7811 p95=66.7613 p99=68.8629 max=70.2846",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status was OK on 300/300 measured requests; full tally {'OK': 300}",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "300 distinct prompt keys across 300 measured requests (expected all distinct; a repeat would be served from llm-d-sc's cache and would not be a miss)",
+          "name": "miss_arm_keys_are_unique",
+          "passed": true
+        },
+        {
+          "detail": "every prompt carried [509] words (~512 tokens targeted); character length 2539..2541",
+          "name": "prompt_length_as_intended",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 70.284625,
+        "n": 300,
+        "p50": 62.441667,
+        "p90": 65.781083,
+        "p95": 66.76125,
+        "p99": 68.862875
+      },
+      "measured_window_s": 4.716925666900352,
+      "name": "classified-miss@512tok-c4",
+      "notes": "Cache-miss: every request pays a full llm-d-sc model forward.",
+      "params": {
+        "cache_mode": "miss",
+        "chain": "llm_d_sc -> load_balancer",
+        "concurrency": 4,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "prompt_tokens": 512,
+        "target": "http://127.0.0.1:8081",
+        "warmup": 100
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 63.60074785684294
+    }
+  ]
+}

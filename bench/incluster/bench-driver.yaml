@@ -1,0 +1,73 @@
+# In-cluster benchmark driver (SPEC-BENCH B-5 / B-7, SPEC-K8S 2).
+#
+# WHY A POD AND NOT A JOB. SPEC-K8S names a `Job praxis-bench`; this is a
+# long-lived Pod running the same driver. The reason is operational, and it is
+# the one that matters for a shared homelab: a Job restarts on failure. If an
+# arm against a single-replica llama.cpp server fails, a Job's restart policy
+# would re-send the whole arm - a retry storm against someone's home cluster,
+# which SPEC-BENCH 3 forbids in as many words. A Pod that idles lets the
+# operator inspect the failure, fix it, and re-run exactly once, deliberately.
+# `restartPolicy: Never` is belt and braces on top of that.
+#
+# WHY `oc cp` AND NOT A ConfigMap. The harness plus scenarios plus the prompt
+# set is ~120 KB, which fits a ConfigMap's ~1 MB budget, but a ConfigMap mount
+# is read-only and the harness writes its JSON and per-request .jsonl sidecar
+# next to itself. `oc cp` into an emptyDir keeps the layout identical to a local
+# run, so the same command line produces the same output tree and the results
+# are directly comparable with the local B-1..B-6 runs.
+#
+# The image is a stock UBI Python. The harness is Python 3 standard library only
+# precisely so that no image build is needed to run it where the numbers must be
+# taken (SPEC-BENCH 1 B-7: a figure measured through `oc port-forward` is a
+# measurement of the tunnel, not of the network).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: praxis-bench
+  namespace: praxis-poc
+  labels:
+    app.kubernetes.io/name: praxis-bench
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+    app.kubernetes.io/component: bench
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: driver
+      image: registry.access.redhat.com/ubi9/python-311:latest
+      command: ["/bin/sh", "-c", "sleep infinity"]
+      workingDir: /bench
+      env:
+        # `llama-server-ds4` gates /metrics behind the same bearer token Praxis
+        # uses for /v1/chat/completions, and B-5 needs that endpoint to prove no
+        # other tenant was occupying the single slot while an arm was running.
+        # Same Secret, same namespace, same mechanism as the proxy: the value is
+        # only ever an Authorization header, is never written to a file or into
+        # argv, and the scrape helper suppresses exception text so a server
+        # error cannot echo it into the results.
+        - name: DS4_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ds4-api-key
+              key: key
+      volumeMounts:
+        - name: bench
+          mountPath: /bench
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 500m
+          memory: 256Mi
+        limits:
+          cpu: "2"
+          memory: 1Gi
+  volumes:
+    - name: bench
+      emptyDir:
+        sizeLimit: 512Mi

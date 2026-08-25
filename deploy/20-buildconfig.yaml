@@ -1,0 +1,54 @@
+# In-cluster image build.
+#
+# Binary source, not Git: the build context is a tarball of BOTH trees (the
+# praxis workspace and this filter crate) streamed from the laptop by
+# `oc start-build --from-dir`, assembled by hack/stage-build-context.sh.
+#
+# The build MUST happen in-cluster: the nodes are amd64 and the dev laptop is
+# arm64 (SPEC-K8S 1). This mirrors how llm-d-sc and llm-d-sc-modelcar are already
+# built in this cluster.
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: praxis-llm-d-sc
+  labels:
+    app.kubernetes.io/name: praxis
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+spec:
+  # Serial: this build is heavy (pingora + aws-lc-sys + the whole praxis tree).
+  # Two of them at once on a shared homelab node is not neighbourly.
+  runPolicy: Serial
+  source:
+    type: Binary
+    binary: {}
+  strategy:
+    type: Docker
+    dockerStrategy:
+      # Relative to the build context root, where stage-build-context.sh puts it.
+      dockerfilePath: Containerfile.praxis
+      env:
+        - name: BUILD_LOGLEVEL
+          value: "2"
+  output:
+    to:
+      kind: ImageStreamTag
+      name: praxis-llm-d-sc:latest
+  # Generous, and matched to the precedent already running on this cluster (the
+  # llm-d-sc BuildConfig requests 4 CPU / 8Gi). Nodes have 31.5 CPU and 64-114Gi,
+  # so this schedules comfortably.
+  #
+  # If the build is OOM-killed, lower codegen parallelism by setting
+  # CARGO_BUILD_JOBS (a build ARG in Containerfile.praxis) rather than switching
+  # to a debug build: every benchmark latency number depends on --release.
+  resources:
+    requests:
+      cpu: "4"
+      memory: 8Gi
+    limits:
+      cpu: "8"
+      memory: 16Gi
+  # A cold Rust build of this dependency graph is slow. Two hours is headroom,
+  # not an expectation.
+  completionDeadlineSeconds: 7200
+  successfulBuildsHistoryLimit: 3
+  failedBuildsHistoryLimit: 3

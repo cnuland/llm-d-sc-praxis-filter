@@ -1,0 +1,15 @@
+# Nothing in this directory may ever contain the ds4 API key.
+#
+# The deploy script pipes the Secret straight from homelab-maas into `oc apply`
+# without writing it to disk, so these patterns are defence in depth against a
+# future change (or a hand-run debugging command) that spills a credential here.
+*.secret.yaml
+secret-*.yaml
+!secret.example.yaml
+*rendered-config*.yaml
+praxis-config.rendered.yaml
+.env
+.env.*
+*.key
+*.pem
+*.token

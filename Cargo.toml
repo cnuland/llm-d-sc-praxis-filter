@@ -1,0 +1,49 @@
+[package]
+name = "llm-d-sc-praxis-filter"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+description = "Praxis HTTP filter that routes to a cluster using llm-d-sc semantic classification"
+license = "MIT"
+publish = false
+
+# Marker consumed by the Praxis server's build-time filter discovery
+# (`server/build.rs` walks `cargo metadata` looking for this key).
+[package.metadata.praxis-filters]
+
+[dependencies]
+async-trait = "0.1.92"
+bytes = "1.12.1"
+http = "1.5.0"
+metrics = "0.24.6"
+praxis-core = { version = "0.5.2", path = "/Users/cnuland/praxis/core", package = "praxis-proxy-core" }
+praxis-filter = { version = "0.5.2", path = "/Users/cnuland/praxis/filter", package = "praxis-proxy-filter" }
+prost = "0.14"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+# NOTE: matches the Praxis workspace pin exactly; `serde_yaml` must resolve to
+# this crate because `export_filters!` expands to `serde_yaml::Value`.
+serde_yaml = { package = "yaml_serde", version = "0.10.4" }
+tokio = { version = "1.53.1", features = ["macros", "rt", "time"] }
+# Only used by the `test-server` scaffolding (see the feature below).
+tokio-stream = { version = "0.1.19", features = ["net"], optional = true }
+tonic = "0.14.6"
+tonic-prost = "0.14.6"
+tracing = "0.1.44"
+
+[build-dependencies]
+tonic-prost-build = "0.14.6"
+
+[features]
+default = []
+# Generates the `classify.Classify` *server* stubs in addition to the client.
+# Off for a normal build (SPEC 4.8: the filter ships a client only); turned on
+# for `cargo test` by the self dev-dependency below so the integration suite can
+# stand up an in-process stub server.
+test-server = ["dep:tokio-stream", "tokio/net", "tokio/sync", "tokio/rt"]
+
+[dev-dependencies]
+# Self dev-dependency: turns on `test-server` for `cargo test` only, so the
+# shipped `cargo build` still generates a client and nothing else (SPEC 4.8).
+llm-d-sc-praxis-filter = { path = ".", features = ["test-server"] }
+tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "time", "net"] }

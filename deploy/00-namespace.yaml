@@ -1,0 +1,10 @@
+# The entire blast radius of this POC. Everything new lives here, so the whole
+# thing can be removed with a single `oc delete namespace praxis-poc` and cannot
+# touch the pre-existing llm-d-sc classifier or the homelab-maas model servers.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: praxis-poc
+  labels:
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+    app.kubernetes.io/managed-by: llm-d-sc-praxis-filter

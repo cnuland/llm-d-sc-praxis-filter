@@ -1,0 +1,124 @@
+# Semantic complexity routing with llm-d-sc.
+#
+# A POST to /v1/chat/completions has its prompt extracted, classified by
+# llm-d-sc over gRPC, and routed to a model cluster sized for the answer.
+#
+#   client ──POST /v1/chat/completions──▶ praxis :8080
+#                                            │
+#                        pre-read body (StreamBuffer, whole body, one chunk)
+#                                            │
+#                                     ┌──────▼───────┐
+#                                     │   llm_d_sc   │──h2c──▶ llm-d-sc :50051
+#                                     └──────┬───────┘◀── ranked signals
+#                                            │ ctx.cluster
+#                                     ┌──────▼───────┐
+#                                     │ load_balancer│──▶ small   (e.g. 8B)
+#                                     └──────────────┘──▶ large   (e.g. 70B)
+#                                                     └──▶ general (fallback)
+#
+# Usage:
+#   # 1. llm-d-sc (already built; this config never changes that repo)
+#   LLM_D_SC_MODEL_DIR=~/llm-d-sc-genesis/artifacts/models/complexity \
+#   LLM_D_SC_CLASSIFIER=complexity \
+#   LLM_D_SC_LISTEN=127.0.0.1:50051 \
+#     ~/llm-d-sc-genesis/target/release/llm-d-sc-server
+#
+#   # 2. praxis, with this crate listed in server/Cargo.toml
+#   cargo run -p praxis-proxy -- -c examples/llm-d-sc-routing.yaml
+#
+# Exercise:
+#   curl -s localhost:8080/v1/chat/completions -H 'content-type: application/json' \
+#     -d '{"messages":[{"role":"user","content":"What is the capital of France?"}]}'
+#   # -> SIMPLE -> cluster "small"
+#
+#   curl -s localhost:8080/v1/chat/completions -H 'content-type: application/json' \
+#     -d '{"messages":[{"role":"user","content":"Design a microservices architecture for a multi-tenant billing platform."}]}'
+#   # -> COMPLEX -> cluster "large"
+#
+#   # Stop llm-d-sc and repeat: both land on "general" and still return 200.
+#   # A classifier outage degrades routing quality; it does not take the
+#   # gateway down.
+
+listeners:
+  - name: ai-gateway
+    address: "127.0.0.1:8080"
+    filter_chains:
+      - inference
+
+filter_chains:
+  - name: inference
+    filters:
+      # Correlation id first, so `llm_d_sc` can reuse it as the
+      # ClassifyRequest.request_id and the classification lines up with the
+      # access log.
+      - filter: request_id
+
+      # NOTE: `llm_d_sc` is used INSTEAD OF `router`, not alongside it. Two
+      # cluster-selecting filters before the same load_balancer is a build
+      # error (`check_conflicting_cluster_selectors`).
+      - filter: llm_d_sc
+        endpoint: "127.0.0.1:50051"
+
+        # `signal` is deliberately omitted. One llm-d-sc process serves exactly
+        # one signal, and it answers INVALID_ARGUMENT for any signal name that
+        # is not that one. An empty signals list is always accepted. Set this
+        # only if you want the mismatch to be loud, and then it MUST equal the
+        # server's LLM_D_SC_CLASSIFIER:
+        # signal: complexity
+
+        default_cluster: general
+        routes:
+          - label: SIMPLE
+            cluster: small
+          - label: MEDIUM
+            cluster: small
+          - label: COMPLEX
+            cluster: large
+          - label: REASONING
+            cluster: large
+
+        # Total budget for the classify RPC. llm-d-sc's own numbers are
+        # 7.7-12.3 ms on a cache miss and ~0.09 ms on a hit, so 100 ms is
+        # generous headroom, not a tight bound.
+        timeout_ms: 100
+        connect_timeout_ms: 1000
+
+        # Route on the top ranked label regardless of score. Raise this to send
+        # low-confidence prompts to `general` instead.
+        min_score: 0.0
+
+        max_prompt_chars: 4096
+
+        # Body-derived routing means the whole body is buffered before the
+        # request is routed. This is the ceiling on that; larger bodies get 413.
+        max_body_bytes: 1048576
+
+        # Fail open: a classifier outage costs routing quality, not availability.
+        # Switch either to `reject` for deployments where an unclassified prompt
+        # must not reach a model.
+        on_unavailable: default_cluster
+        on_resource_exhausted: default_cluster
+        status_on_reject: 503
+
+        # Provenance to upstream: x-llm-d-sc-{label,score,classifier,
+        # taxonomy-revision,status}. Client-supplied x-llm-d-sc-* headers are
+        # stripped on every path regardless of this setting.
+        emit_headers: true
+
+      # Every cluster named above -- including default_cluster -- must be
+      # defined here, or the pipeline fails to build
+      # (`check_misaligned_clusters`).
+      - filter: load_balancer
+        clusters:
+          - name: small
+            load_balancer_strategy: round_robin
+            endpoints:
+              - "127.0.0.1:9001"
+          - name: large
+            load_balancer_strategy: round_robin
+            endpoints:
+              - "127.0.0.1:9002"
+          - name: general
+            load_balancer_strategy: round_robin
+            endpoints:
+              - "127.0.0.1:9003"

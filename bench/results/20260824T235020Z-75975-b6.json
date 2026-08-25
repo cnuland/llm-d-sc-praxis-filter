@@ -1,0 +1,411 @@
+{
+  "manifest": {
+    "argv": [
+      "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py",
+      "--scenario",
+      "b6",
+      "--target",
+      "http://127.0.0.1:8081",
+      "--param",
+      "baseline_url=http://127.0.0.1:8080",
+      "--param",
+      "down_url=http://127.0.0.1:8091",
+      "--param",
+      "slow_url=http://127.0.0.1:8092",
+      "--param",
+      "exhausted_url=http://127.0.0.1:8093",
+      "--param",
+      "reject_url=http://127.0.0.1:8094",
+      "--param",
+      "timeout_ms=100",
+      "--warmup",
+      "50",
+      "--measured",
+      "300",
+      "--concurrency",
+      "1,4",
+      "--topology",
+      "local-loopback"
+    ],
+    "command": "/Users/cnuland/llm-d-sc-praxis-filter/bench/harness.py --scenario b6 --target http://127.0.0.1:8081 --param baseline_url=http://127.0.0.1:8080 --param down_url=http://127.0.0.1:8091 --param slow_url=http://127.0.0.1:8092 --param exhausted_url=http://127.0.0.1:8093 --param reject_url=http://127.0.0.1:8094 --param timeout_ms=100 --warmup 50 --measured 300 --concurrency 1,4 --topology local-loopback",
+    "concurrency": [
+      1,
+      4
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. Use '--' to separate paths from revisions, like this: 'git <command> [<revis",
+        "path": "/Users/cnuland/llm-d-sc-praxis-filter",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": false,
+        "error": null,
+        "path": "/Users/cnuland/llm-d-sc-genesis",
+        "sha": "821ec12983e2908bf0af8e0216ec9001d7bacaa1",
+        "untracked": 1
+      }
+    },
+    "host": {
+      "cpu": "Apple M4 Max",
+      "hostname": "cnuland-mac",
+      "logical_cores": 16,
+      "machine": "arm64",
+      "os": "macOS-26.6-arm64-arm-64bit",
+      "python": "3.11.11",
+      "python_implementation": "CPython"
+    },
+    "leakage_check": {
+      "anchor_count": 138,
+      "clean": true,
+      "comparisons": 17664,
+      "limits": {
+        "content_containment": 0.75,
+        "content_jaccard": 0.6,
+        "full_containment": 0.8,
+        "full_jaccard": 0.6
+      },
+      "max_containment_observed": 0.5,
+      "max_full_containment_observed": 0.7143,
+      "max_full_jaccard_observed": 0.5556,
+      "max_jaccard_observed": 0.3333,
+      "near_duplicates": 0,
+      "verbatim_overlaps": 0
+    },
+    "measured": 300,
+    "notes": [
+      "Upstreams are stubs. Only the classifier path is broken; the model path is not involved.",
+      "'classifier down' is an unbound port and needs no server at all; 'classifier slow' is bench/stub_upstream.py --mode tcp-blackhole, which accepts TCP and then never speaks.",
+      "The queue-exhausted case requires a REAL local llm-d-sc so the bounded queue exists to be exhausted; a stub cannot produce a genuine RESOURCE_EXHAUSTED."
+    ],
+    "params": {
+      "baseline_url": "http://127.0.0.1:8080",
+      "down_url": "http://127.0.0.1:8091",
+      "exhausted_url": "http://127.0.0.1:8093",
+      "reject_url": "http://127.0.0.1:8094",
+      "slow_url": "http://127.0.0.1:8092",
+      "timeout_ms": "100"
+    },
+    "prompts_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/results/20260824T235020Z-75975-b6.records.jsonl",
+    "run_id": "20260824T235020Z-75975",
+    "scenario": "b6",
+    "scenario_description": "Degradation and failure: classifier down, classifier slow, queue exhausted, fail-closed.",
+    "scenario_spec": "B-6",
+    "target": "http://127.0.0.1:8081",
+    "topology": "local-loopback",
+    "unix": 1787615458.7956212,
+    "utc": "2026-08-24T23:50:58Z",
+    "warmup": 50
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "50 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1862 p90=0.2755 p95=0.2918 p99=0.3196 max=0.3255",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "300/300 requests returned HTTP 200 while the classifier was unusable; status tally {'200': 300}",
+          "name": "fail_open_returned_200_for_every_request",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status tally {'ERROR': 300}; expected every request to record one of ['UNAVAILABLE', 'ERROR'] and route to default_cluster per SPEC \u00a74.6",
+          "name": "degraded_path_recorded_its_reason",
+          "passed": true
+        },
+        {
+          "detail": "p50 0.186 ms / p99 0.320 ms against a 100 ms timeout budget. A fail-open path that waits the full timeout on every request has already taken the gateway down; p99 must stay well under 50 ms.",
+          "name": "added_latency_is_connect_refused_not_the_full_timeout",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.325459,
+        "n": 300,
+        "p50": 0.186167,
+        "p90": 0.275458,
+        "p95": 0.291792,
+        "p99": 0.319583
+      },
+      "measured_window_s": 0.06498812488280237,
+      "name": "classifier-down",
+      "notes": "The filter's gRPC endpoint is an unbound port: connect is refused immediately.",
+      "params": {
+        "cache_mode": "miss",
+        "case": "classifier down (unbound port)",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "on_unavailable": "default_cluster",
+        "target": "http://127.0.0.1:8091",
+        "timeout_ms": 100.0,
+        "warmup": 50
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 4616.227973049092
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "50 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=104.0389 p90=104.9909 p95=105.2117 p99=105.8219 max=107.4957",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "300/300 requests returned HTTP 200 while the classifier was unusable; status tally {'200': 300}",
+          "name": "fail_open_returned_200_for_every_request",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status tally {'TIMEOUT': 300}; expected every request to record one of ['TIMEOUT'] and route to default_cluster per SPEC \u00a74.6",
+          "name": "degraded_path_recorded_its_reason",
+          "passed": true
+        },
+        {
+          "detail": "p50 104.039 ms / p99 105.822 ms against timeout_ms 100. p50 below 80 ms would mean something other than the timeout ended the request; p99 above 150 ms would mean the budget is not being honoured.",
+          "name": "added_latency_is_bounded_by_timeout_ms",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 107.495667,
+        "n": 300,
+        "p50": 104.038916,
+        "p90": 104.990875,
+        "p95": 105.21175,
+        "p99": 105.821917
+      },
+      "measured_window_s": 31.227151916828007,
+      "name": "classifier-slow",
+      "notes": "Peer accepts TCP then never completes the HTTP/2 preface, so timeout_ms ends it.",
+      "params": {
+        "cache_mode": "miss",
+        "case": "classifier slow (tcp black hole)",
+        "concurrency": 1,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "target": "http://127.0.0.1:8092",
+        "timeout_ms": 100.0,
+        "warmup": 50
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 9.607024066717175
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "50 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=430.1940 p90=872.8106 p95=932.1900 p99=976.9736 max=981.3515",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "300/300 requests returned HTTP 200 while the classifier was unusable; status tally {'200': 300}",
+          "name": "fail_open_returned_200_for_every_request",
+          "passed": true
+        },
+        {
+          "detail": "x-llm-d-sc-status tally {'OK': 260, 'RESOURCE_EXHAUSTED': 40}. If no request came back RESOURCE_EXHAUSTED the queue was never exhausted and this arm proves nothing about fail-open under load; raise --param exhaust_concurrency.",
+          "name": "resource_exhausted_was_actually_provoked",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "status_tally": {
+          "OK": 260,
+          "RESOURCE_EXHAUSTED": 40
+        }
+      },
+      "latency_ms": {
+        "max": 981.351459,
+        "n": 300,
+        "p50": 430.194,
+        "p90": 872.810583,
+        "p95": 932.190041,
+        "p99": 976.973584
+      },
+      "measured_window_s": 0.9790688750799745,
+      "name": "queue-exhausted",
+      "notes": "Requires a real local llm-d-sc: only it has a bounded queue to exhaust.",
+      "params": {
+        "cache_mode": "miss",
+        "case": "llm-d-sc bounded queue driven past 256",
+        "concurrency": 300,
+        "expected_status": [
+          200
+        ],
+        "measured": 300,
+        "on_resource_exhausted": "default_cluster",
+        "target": "http://127.0.0.1:8093",
+        "warmup": 50
+      },
+      "status_counts": {
+        "200": 300
+      },
+      "throughput": 306.4135809398442
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 300 measured records, expected 300",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'503': 300}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [503], saw {'503': 300}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "50 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=0.1074 p90=0.1447 p95=0.1468 p99=0.1595 max=0.1747",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "status tally {'503': 300}; expected every request to be answered 503. A mixture, or any transport error, would mean the reject path hangs or storms rather than refusing cleanly.",
+          "name": "rejects_cleanly_with_the_configured_status",
+          "passed": true
+        },
+        {
+          "detail": "300/300 requests completed without a transport error or timeout",
+          "name": "no_hangs_on_the_reject_path",
+          "passed": true
+        },
+        {
+          "detail": "measured keys are disjoint from every other miss-mode arm in this run",
+          "name": "no_cross_arm_key_reuse",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "latency_ms": {
+        "max": 0.174708,
+        "n": 300,
+        "p50": 0.107417,
+        "p90": 0.14475,
+        "p95": 0.146834,
+        "p99": 0.159458
+      },
+      "measured_window_s": 0.05148991686291993,
+      "name": "fail-closed",
+      "notes": "Fail-closed posture: an unclassified prompt must not reach a model.",
+      "params": {
+        "cache_mode": "miss",
+        "case": "on_resource_exhausted: reject",
+        "concurrency": 1,
+        "expected_status": [
+          503
+        ],
+        "measured": 300,
+        "status_on_reject": 503,
+        "target": "http://127.0.0.1:8094",
+        "warmup": 50
+      },
+      "status_counts": {
+        "503": 300
+      },
+      "throughput": 5826.383460643005
+    }
+  ]
+}

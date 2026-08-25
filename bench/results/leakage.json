@@ -1,0 +1,138 @@
+{
+  "anchor_count": 138,
+  "anchor_dir": "/Users/cnuland/llm-d-sc-genesis/classifiers",
+  "anchor_files_missing": [],
+  "anchor_files_read": [
+    "complexity.json",
+    "cost.json",
+    "sensitivity.json"
+  ],
+  "boundary_count": 8,
+  "clean": true,
+  "closest_pairs": [
+    {
+      "anchor": "How many ounces are in a pound?",
+      "anchor_taxonomy": "cost",
+      "containment": 0.3333,
+      "full_containment": 0.7143,
+      "full_jaccard": 0.5556,
+      "id": "hp-simple-001",
+      "jaccard": 0.2,
+      "prompt": "How many teaspoons are in a tablespoon?"
+    },
+    {
+      "anchor": "How many ounces are in a pound?",
+      "anchor_taxonomy": "cost",
+      "containment": 0.3333,
+      "full_containment": 0.7143,
+      "full_jaccard": 0.4545,
+      "id": "hp-simple-016",
+      "jaccard": 0.1429,
+      "prompt": "How many innings are in a regulation baseball game?"
+    },
+    {
+      "anchor": "Give me a recipe for sourdough bread.",
+      "anchor_taxonomy": "sensitivity",
+      "containment": 0.3333,
+      "full_containment": 0.6667,
+      "full_jaccard": 0.4444,
+      "id": "hp-simple-017",
+      "jaccard": 0.1667,
+      "prompt": "Give me a synonym for diligent."
+    },
+    {
+      "anchor": "What is the capital of France?",
+      "anchor_taxonomy": "complexity",
+      "containment": 0.0,
+      "full_containment": 0.6667,
+      "full_jaccard": 0.4444,
+      "id": "hp-simple-032",
+      "jaccard": 0.0,
+      "prompt": "What is the square root of 1764?"
+    },
+    {
+      "anchor": "Explain how a hash map works.",
+      "anchor_taxonomy": "sensitivity",
+      "containment": 0.5,
+      "full_containment": 0.6667,
+      "full_jaccard": 0.2353,
+      "id": "hp-medium-003",
+      "jaccard": 0.1429,
+      "prompt": "Explain how compound interest works using a 5,000 dollar balance held for ten years."
+    },
+    {
+      "anchor": "Set a timer for ten minutes.",
+      "anchor_taxonomy": "cost",
+      "containment": 0.5,
+      "full_containment": 0.6667,
+      "full_jaccard": 0.1818,
+      "id": "hp-complex-008",
+      "jaccard": 0.1176,
+      "prompt": "Write a screenplay treatment with three act structure, character arcs and ten key scenes for a heist set in a shipping port."
+    },
+    {
+      "anchor": "Define photosynthesis in one sentence.",
+      "anchor_taxonomy": "complexity",
+      "containment": 0.5,
+      "full_containment": 0.6,
+      "full_jaccard": 0.3,
+      "id": "hp-medium-031",
+      "jaccard": 0.3333,
+      "prompt": "In one sentence, why is the sky blue?"
+    },
+    {
+      "anchor": "Give me a short bash one liner to count lines in a file.",
+      "anchor_taxonomy": "cost",
+      "containment": 0.375,
+      "full_containment": 0.5833,
+      "full_jaccard": 0.3182,
+      "id": "hp-medium-008",
+      "jaccard": 0.1765,
+      "prompt": "Give me a shell one liner that renames every .jpeg in a directory to .jpg without clobbering anything."
+    },
+    {
+      "anchor": "What does the acronym HTML stand for?",
+      "anchor_taxonomy": "complexity",
+      "containment": 0.3333,
+      "full_containment": 0.5714,
+      "full_jaccard": 0.3333,
+      "id": "hp-simple-007",
+      "jaccard": 0.1667,
+      "prompt": "In a shipping notification, what does ETA stand for?"
+    },
+    {
+      "anchor": "Is the post office open on Sunday?",
+      "anchor_taxonomy": "cost",
+      "containment": 0.25,
+      "full_containment": 0.5714,
+      "full_jaccard": 0.4,
+      "id": "hp-simple-021",
+      "jaccard": 0.1429,
+      "prompt": "Is the public library open on Mondays?"
+    }
+  ],
+  "comparisons": 17664,
+  "domain_count": 91,
+  "internal_duplicates": 0,
+  "limits": {
+    "content_containment": 0.75,
+    "content_jaccard": 0.6,
+    "full_containment": 0.8,
+    "full_jaccard": 0.6
+  },
+  "max_containment_observed": 0.5,
+  "max_full_containment_observed": 0.7143,
+  "max_full_jaccard_observed": 0.5556,
+  "max_jaccard_observed": 0.3333,
+  "near_duplicates": 0,
+  "per_class": {
+    "COMPLEX": 32,
+    "MEDIUM": 32,
+    "REASONING": 32,
+    "SIMPLE": 32
+  },
+  "prompt_count": 128,
+  "prompts_file": "/Users/cnuland/llm-d-sc-praxis-filter/bench/prompts/complexity-heldout.json",
+  "schema_problems": [],
+  "verbatim_overlaps": 0
+}

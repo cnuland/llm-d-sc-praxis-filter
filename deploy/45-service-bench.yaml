@@ -1,0 +1,48 @@
+# Benchmark-only Service (SPEC-BENCH B-5 / B-7).
+#
+# Separate from `praxis` on purpose. The production Service publishes the data
+# plane and nothing else - in particular it deliberately does NOT publish the
+# admin listener. This one carries the extra benchmark listeners and the admin
+# port, so the in-cluster bench driver can (a) drive the B-5 static arms and the
+# B-7 control arm, and (b) read Praxis's own `llm_d_sc_classify_total` counter to
+# prove that classification did or did not happen on a given arm.
+#
+# It exists for the duration of the benchmark and lives entirely inside
+# `praxis-poc`, so it is removed with the namespace.
+#
+# targetPort is numeric: the Deployment only names 8080/9901, and container port
+# declarations are informational in Kubernetes - a Service may target any port
+# the pod actually listens on.
+apiVersion: v1
+kind: Service
+metadata:
+  name: praxis-bench
+  labels:
+    app.kubernetes.io/name: praxis
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+    app.kubernetes.io/component: bench
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: praxis
+  ports:
+    - name: always-large
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
+    - name: always-small
+      port: 8083
+      targetPort: 8083
+      protocol: TCP
+    - name: b7-classified
+      port: 8084
+      targetPort: 8084
+      protocol: TCP
+    - name: b7-baseline
+      port: 8085
+      targetPort: 8085
+      protocol: TCP
+    - name: admin
+      port: 9901
+      targetPort: 9901
+      protocol: TCP

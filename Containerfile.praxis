@@ -1,0 +1,175 @@
+# Containerfile.praxis - Praxis proxy built WITH the llm_d_sc filter crate.
+#
+# Modelled on ~/praxis/Containerfile, which already solves this build. Two
+# deliberate divergences from that file, both forced by the build environment:
+#
+#   1. No `# syntax=docker/dockerfile:1` directive and no `RUN --mount=type=cache`.
+#      Those are BuildKit features. This image is built by an OpenShift Docker-
+#      strategy BuildConfig, which uses buildah. A binary build starts from a
+#      fresh pod every time, so the cache mounts would buy nothing even where
+#      they parse.
+#   2. No dependency-stub pre-build layer. That trick exists to keep a *cached*
+#      dependency layer warm across rebuilds. With no cross-build cache it only
+#      adds a redundant compile of the dependency graph.
+#
+# Everything that matters is kept: the rust:1.96-alpine builder matching
+# rust-toolchain.toml (channel = "1.96.0"), static OpenSSL against musl, the same
+# apk toolchain, a minimal alpine runtime, and a non-root entrypoint.
+#
+# Build context layout (produced by hack/stage-build-context.sh):
+#   ./praxis/                   the Praxis workspace
+#   ./llm-d-sc-praxis-filter/   this crate
+#   ./Containerfile.praxis      this file
+#
+# Build:
+#   CTX="$(hack/stage-build-context.sh)"
+#   oc start-build praxis-llm-d-sc -n praxis-poc --from-dir="$CTX" --follow
+
+# ------------------------------------------------------------------------------
+# Stage 1: Build
+# ------------------------------------------------------------------------------
+
+FROM rust:1.96-alpine AS builder
+
+# Static OpenSSL: the runtime stage is a bare alpine with no openssl runtime.
+ENV OPENSSL_STATIC=1
+# prost-build ships a vendored protoc built against glibc, which cannot execute
+# on musl. Point it at alpine's native protoc instead.
+ENV PROTOC=/usr/bin/protoc
+
+RUN apk add --no-cache \
+      musl-dev \
+      openssl-dev \
+      openssl-libs-static \
+      pkgconf \
+      cmake \
+      make \
+      g++ \
+      perl \
+      protobuf \
+      protobuf-dev
+
+WORKDIR /src
+
+COPY praxis/                  /src/praxis/
+COPY llm-d-sc-praxis-filter/  /src/llm-d-sc-praxis-filter/
+
+# --- Wire the filter crate into the Praxis server -----------------------------
+#
+# SPEC 5 (Phase A): the entire Praxis-side change is ONE line in server/Cargo.toml.
+# The server's build.rs then discovers the crate through `cargo metadata` by its
+# [package.metadata.praxis-filters] marker and registers it at startup.
+#
+# The crate's Cargo.toml carries absolute host path dependencies
+# (/Users/cnuland/praxis/...), which obviously do not exist in the image, so they
+# are rewritten to the staged location first. Staging keeps the two trees as
+# siblings, so a relative "../praxis/..." path dependency resolves correctly too
+# and this rewrite is simply a no-op in that case.
+# The wiring is IDEMPOTENT. The praxis tree may arrive already wired (it
+# currently does, via a relative `path = "../../llm-d-sc-praxis-filter"`), and
+# because staging places the two trees as siblings that relative path resolves to
+# /src/llm-d-sc-praxis-filter here exactly as it does on the laptop. Inserting a
+# second entry would be a duplicate key in [dependencies] and a hard cargo error,
+# so an existing entry is left strictly alone and only an unwired tree is patched.
+#
+# The insertion uses awk rather than `sed -i 's/.../\n.../'`: a newline in a sed
+# replacement is a GNU extension that busybox sed (what alpine ships) handles
+# inconsistently, whereas this awk is byte-identical under busybox, mawk and gawk.
+RUN set -e; \
+    sed -i 's#/Users/cnuland/praxis#/src/praxis#g' /src/llm-d-sc-praxis-filter/Cargo.toml; \
+    if grep -q '^llm-d-sc-praxis-filter[[:space:]]*=' /src/praxis/server/Cargo.toml; then \
+      echo "server/Cargo.toml is already wired; leaving it untouched"; \
+    else \
+      awk '/^\[dependencies\]$/ { \
+             print; \
+             print "llm-d-sc-praxis-filter = { path = \"/src/llm-d-sc-praxis-filter\" }"; \
+             next \
+           } \
+           { print }' \
+        /src/praxis/server/Cargo.toml > /tmp/server-Cargo.toml; \
+      mv /tmp/server-Cargo.toml /src/praxis/server/Cargo.toml; \
+      echo "wired the filter crate into server/Cargo.toml"; \
+    fi
+
+# Fail loudly if the wiring is missing or duplicated, and if any host absolute
+# path survived. A silently unwired build would produce a perfectly healthy
+# Praxis binary with no llm_d_sc filter in it, and the failure would only surface
+# later as an inscrutable config error at pod startup.
+RUN set -e; \
+    n=$(grep -c '^llm-d-sc-praxis-filter[[:space:]]*=' /src/praxis/server/Cargo.toml || true); \
+    if [ "$n" -ne 1 ]; then \
+      echo "FATAL: expected exactly 1 filter dependency in server/Cargo.toml, found $n" >&2; exit 1; \
+    fi; \
+    if grep -q '/Users/cnuland' /src/llm-d-sc-praxis-filter/Cargo.toml; then \
+      echo "FATAL: host absolute paths remain in the filter crate Cargo.toml" >&2; exit 1; \
+    fi; \
+    echo "OK: filter crate wired into server/Cargo.toml exactly once"
+
+WORKDIR /src/praxis
+
+# Lower this if the build pod is OOM-killed (SPEC-K8S 4). Never switch to a debug
+# build to save memory: every benchmark latency figure depends on --release.
+# An ARG with no default expands to the EMPTY STRING when no --build-arg is
+# passed, and `CARGO_BUILD_JOBS=` is a hard cargo error ("Number of parallel jobs
+# should be `default` or a number"), not an ignored value. So the default is
+# spelled out. `default` means "one job per CPU", which is what an unset
+# CARGO_BUILD_JOBS would have meant; lower it via --build-arg if the builder pod
+# gets OOM-killed during codegen.
+ARG CARGO_BUILD_JOBS=default
+ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
+
+RUN cargo build --release -p praxis-proxy \
+ && cp target/release/praxis /usr/local/bin/praxis
+
+# Prove the filter is actually registered, at build time rather than at rollout.
+# `--validate` runs the real startup path (filter factory construction, chain
+# expansion, ordering and cluster-alignment checks) and exits. If `llm_d_sc` were
+# missing from the registry, or if its config schema disagreed with the config we
+# are about to ship, this fails the build instead of CrashLoopBackOff-ing later.
+# It performs no DNS and no network I/O: cluster endpoints are stored as strings
+# and resolved per-connection, and the filter's gRPC channel is connect_lazy.
+RUN /usr/local/bin/praxis --validate \
+      -c /src/llm-d-sc-praxis-filter/deploy/config/praxis-config.yaml \
+ && echo "OK: llm_d_sc filter is registered and the shipped config validates"
+
+# ------------------------------------------------------------------------------
+# Stage 2: Runtime
+# ------------------------------------------------------------------------------
+
+FROM alpine:3.23
+
+LABEL org.opencontainers.image.title="praxis-llm-d-sc" \
+      org.opencontainers.image.description="Praxis proxy with the llm_d_sc semantic-classification routing filter" \
+      org.opencontainers.image.licenses="MIT"
+
+# OpenShift runs containers with an arbitrary, per-namespace UID and GID 0. So:
+#   - nothing may assume uid 0 or uid 1001 specifically;
+#   - every path the process must read or write is owned by group 0 and made
+#     group-writable (`chmod g=u`), because GID 0 is the one identity guaranteed
+#     to be present.
+# /etc/praxis is where the initContainer writes the rendered config (a memory
+# emptyDir at runtime); /config-template is where the ConfigMap is mounted.
+RUN apk add --no-cache ca-certificates \
+ && mkdir -p /etc/praxis /config-template \
+ && chgrp -R 0 /etc/praxis /config-template \
+ && chmod -R g=u /etc/praxis /config-template
+
+COPY --from=builder --chown=root:root --chmod=0555 \
+     /usr/local/bin/praxis /usr/local/bin/praxis
+
+# Renders the ConfigMap template into /etc/praxis/config.yaml, substituting the
+# ds4 bearer token from the environment. Run as the initContainer's command.
+COPY --chown=root:root --chmod=0555 \
+     llm-d-sc-praxis-filter/deploy/runtime/render-config.sh \
+     /usr/local/bin/render-config.sh
+
+# Numeric, and only a placeholder: OpenShift overrides it with the namespace's
+# assigned UID. Its real job is to guarantee the image never defaults to root.
+USER 1001
+
+WORKDIR /etc/praxis
+
+# 8080 data plane, 9901 admin (/healthy, /ready, /metrics).
+EXPOSE 8080 9901
+
+ENTRYPOINT ["/usr/local/bin/praxis", "-c", "/etc/praxis/config.yaml"]

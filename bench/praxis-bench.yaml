@@ -1,0 +1,172 @@
+# Benchmark topology: TWO listeners on one Praxis process.
+#
+# :8080  baseline    request_id -> router   -> load_balancer   (static routing)
+# :8081  classified  request_id -> llm_d_sc -> load_balancer   (content-aware)
+#
+# Two listeners rather than two processes so the arms share one binary, one
+# runtime, one thread pool and one machine state. The ONLY difference between
+# them is the cluster-selecting filter, which is what B-1 claims to measure.
+#
+# They cannot share a chain: `check_conflicting_cluster_selectors` rejects two
+# cluster-selecting filters before one load_balancer at config-validation time
+# (test T-P2, and verified against the real binary).
+#
+# Upstreams are stubs, never the homelab models — B-1/B-2/B-3/B-6 push high
+# concurrency and must not touch someone's home cluster (SPEC-BENCH §3).
+
+listeners:
+  - name: baseline
+    address: "127.0.0.1:8080"
+    filter_chains: [baseline-chain]
+
+  - name: classified
+    address: "127.0.0.1:8081"
+    filter_chains: [classified-chain]
+
+  # ---- B-6 degradation cases -------------------------------------------
+  # Each failure mode needs its own listener because the cases differ only in
+  # `llm_d_sc` config, and two cluster-selecting filters cannot share a chain.
+  - name: sc-down
+    address: "127.0.0.1:8091"
+    filter_chains: [sc-down-chain]
+
+  - name: sc-slow
+    address: "127.0.0.1:8092"
+    filter_chains: [sc-slow-chain]
+
+  - name: sc-exhausted
+    address: "127.0.0.1:8093"
+    filter_chains: [sc-exhausted-chain]
+
+  - name: sc-reject
+    address: "127.0.0.1:8094"
+    filter_chains: [sc-reject-chain]
+
+filter_chains:
+  - name: baseline-chain
+    filters:
+      - filter: request_id
+      - filter: router
+        routes:
+          - path_prefix: "/"
+            cluster: small
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["127.0.0.1:9001"]
+
+  - name: classified-chain
+    filters:
+      - filter: request_id
+      - filter: llm_d_sc
+        endpoint: "127.0.0.1:50051"
+        default_cluster: general
+        timeout_ms: 200
+        max_body_bytes: 4194304   # 4 MiB — B-2 sweeps up to 1 MiB bodies
+        routes:
+          - {label: SIMPLE, cluster: small}
+          - {label: MEDIUM, cluster: small}
+          - {label: COMPLEX, cluster: large}
+          - {label: REASONING, cluster: large}
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["127.0.0.1:9001"]
+          - name: large
+            endpoints: ["127.0.0.1:9002"]
+          - name: general
+            endpoints: ["127.0.0.1:9001"]
+
+
+  - name: sc-down-chain
+    filters:
+      - filter: request_id
+      - filter: llm_d_sc
+        endpoint: "127.0.0.1:1"
+        default_cluster: general
+        timeout_ms: 100
+        routes:
+          - {label: SIMPLE, cluster: small}
+          - {label: MEDIUM, cluster: small}
+          - {label: COMPLEX, cluster: large}
+          - {label: REASONING, cluster: large}
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["127.0.0.1:9001"]
+          - name: large
+            endpoints: ["127.0.0.1:9002"]
+          - name: general
+            endpoints: ["127.0.0.1:9001"]
+
+  - name: sc-slow-chain
+    filters:
+      - filter: request_id
+      - filter: llm_d_sc
+        # A stub that sleeps 500 ms, NOT the real classifier. Provoking a
+        # timeout against the real one would need a ~1 ms budget, where timer
+        # granularity and RPC teardown dominate the measurement and the arm
+        # stops testing the deadline at all.
+        endpoint: "127.0.0.1:50052"
+        default_cluster: general
+        timeout_ms: 100
+        routes:
+          - {label: SIMPLE, cluster: small}
+          - {label: MEDIUM, cluster: small}
+          - {label: COMPLEX, cluster: large}
+          - {label: REASONING, cluster: large}
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["127.0.0.1:9001"]
+          - name: large
+            endpoints: ["127.0.0.1:9002"]
+          - name: general
+            endpoints: ["127.0.0.1:9001"]
+
+  - name: sc-exhausted-chain
+    filters:
+      - filter: request_id
+      - filter: llm_d_sc
+        endpoint: "127.0.0.1:50051"
+        default_cluster: general
+        timeout_ms: 5000
+        routes:
+          - {label: SIMPLE, cluster: small}
+          - {label: MEDIUM, cluster: small}
+          - {label: COMPLEX, cluster: large}
+          - {label: REASONING, cluster: large}
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["127.0.0.1:9001"]
+          - name: large
+            endpoints: ["127.0.0.1:9002"]
+          - name: general
+            endpoints: ["127.0.0.1:9001"]
+
+  - name: sc-reject-chain
+    filters:
+      - filter: request_id
+      - filter: llm_d_sc
+        endpoint: "127.0.0.1:1"
+        default_cluster: general
+        timeout_ms: 100
+        on_unavailable: reject
+        status_on_reject: 503
+        routes:
+          - {label: SIMPLE, cluster: small}
+          - {label: MEDIUM, cluster: small}
+          - {label: COMPLEX, cluster: large}
+          - {label: REASONING, cluster: large}
+      - filter: load_balancer
+        clusters:
+          - name: small
+            endpoints: ["127.0.0.1:9001"]
+          - name: large
+            endpoints: ["127.0.0.1:9002"]
+          - name: general
+            endpoints: ["127.0.0.1:9001"]
+
+admin:
+  address: "127.0.0.1:9901"

@@ -1,0 +1,150 @@
+# llm_d_sc — local end-to-end demo config (SPEC Phase C)
+#
+# One HTTP listener. One chain. The `llm_d_sc` filter reads the prompt out of an
+# OpenAI-shaped request body, asks llm-d-sc to classify it over gRPC, maps the
+# returned label to a Praxis cluster, and hands that cluster to `load_balancer`.
+# llm-d-sc produces a signal; Praxis keeps routing authority (SPEC C2).
+#
+#   client ──POST /v1/chat/completions──> :8080
+#              request_id                (correlation id, reused as ClassifyRequest.request_id)
+#              llm_d_sc                  ──h2c──> llm-d-sc :50051
+#              load_balancer             ──> small | large | general
+#
+# Ports match demo/run-demo.sh. Every backend here is demo/stub-upstream.py,
+# which just names itself and echoes the x-llm-d-sc-* provenance headers back.
+#
+# Usage:
+#   ./demo/run-demo.sh                       # starts everything, asserts, tears down
+#   praxis -t -c demo/praxis-demo.yaml       # validate only (builds the filter pipeline)
+#   praxis    -c demo/praxis-demo.yaml       # run against already-running dependencies
+
+# Admin endpoint: /metrics carries the llm_d_sc_classify_total{status},
+# llm_d_sc_classify_duration_seconds and llm_d_sc_route_total{label,cluster}
+# series (SPEC 4.7). run-demo.sh scrapes it into the evidence directory.
+admin:
+  address: "127.0.0.1:9901"
+  verbose: true
+
+metrics:
+  filter_duration: true
+
+listeners:
+  - name: gateway
+    address: "127.0.0.1:8080"
+    filter_chains:
+      - main
+
+filter_chains:
+  - name: main
+    filters:
+      # Sets X-Request-ID when the client did not. The llm_d_sc filter prefers
+      # that value for ClassifyRequest.request_id so a classification can be
+      # correlated with the access log (SPEC 4.5).
+      - filter: request_id
+
+      # ── The filter under test ────────────────────────────────────────────
+      # Every key below is spelled out even where it equals its default, so
+      # this file doubles as the worked example of SPEC 4.2.
+      - filter: llm_d_sc
+        # host:port of llm-d-sc. h2c, no TLS in v0.1 (SPEC 7).
+        endpoint: "127.0.0.1:50051"
+
+        # `signal:` is deliberately OMITTED.
+        #
+        # llm-d-sc compares every entry of ClassifyRequest.signals against the
+        # one signal the instance serves and answers INVALID_ARGUMENT on a
+        # mismatch; an empty list skips that check entirely (SPEC 2.1). Omitting
+        # the key sends [] and is always accepted. Set it only if you want the
+        # filter to assert which taxonomy it is talking to, and then it MUST
+        # equal the server's LLM_D_SC_CLASSIFIER:
+        #
+        #   signal: complexity
+
+        # Fallback for every non-decision path: no prompt, low confidence,
+        # unmapped label, abstain, timeout, classifier down. Fail-open.
+        default_cluster: general
+
+        # Ranked label -> cluster. The v0.1 complexity taxonomy is exactly
+        # these four labels (classifiers/complexity.json).
+        routes:
+          - label: SIMPLE
+            cluster: small
+          - label: MEDIUM
+            cluster: small
+          - label: COMPLEX
+            cluster: large
+          - label: REASONING
+            cluster: large
+
+        # Total budget for the classify RPC. Measured on this host: ~7.7 ms p50
+        # / ~9.1 ms p99 on a cache miss, ~0.11 ms on a hit. 100 ms leaves room
+        # for the lazy first connect without hiding a real regression.
+        timeout_ms: 100
+
+        # 0.0 = accept the top label whatever its score. Raise it to send
+        # low-confidence prompts to default_cluster instead.
+        min_score: 0.0
+
+        # Prompt is trimmed and truncated (on a char boundary) before the RPC.
+        max_prompt_chars: 4096
+
+        # StreamBuffer ceiling: the whole request body is buffered before
+        # routing, so this is a real memory cost per in-flight request.
+        # Bodies above it are rejected with 413.
+        max_body_bytes: 1048576
+
+        # Fail-open posture (SPEC 4.6). `reject` is the alternative for
+        # deployments where an unclassified prompt must not reach a model.
+        on_unavailable: default_cluster
+        on_resource_exhausted: default_cluster
+        status_on_reject: 503
+
+        # Emit x-llm-d-sc-{label,score,classifier,taxonomy-revision,status}
+        # to the upstream. Client-supplied x-llm-d-sc-* headers are stripped on
+        # every path regardless, so provenance cannot be forged.
+        emit_headers: true
+
+        connect_timeout_ms: 1000
+
+      # ── Routing authority ────────────────────────────────────────────────
+      # Note there is no `router` filter here. Two cluster-selecting filters
+      # ahead of the same load_balancer is a build error in Praxis
+      # (check_conflicting_cluster_selectors), so llm_d_sc replaces `router`
+      # rather than joining it (SPEC 2.2).
+      #
+      # Every cluster named in `routes[].cluster` plus `default_cluster` must be
+      # defined here or the pipeline fails check_misaligned_clusters at startup.
+      - filter: load_balancer
+        clusters:
+          - name: small
+            load_balancer_strategy: round_robin
+            connection_timeout_ms: 1000
+            read_timeout_ms: 10000
+            endpoints:
+              - "127.0.0.1:9101"
+
+          - name: large
+            load_balancer_strategy: round_robin
+            connection_timeout_ms: 1000
+            read_timeout_ms: 10000
+            endpoints:
+              - "127.0.0.1:9102"
+
+          # The fail-open destination. Reached when llm-d-sc is down, times
+          # out, abstains, or the body carries no prompt.
+          - name: general
+            load_balancer_strategy: round_robin
+            connection_timeout_ms: 1000
+            read_timeout_ms: 10000
+            endpoints:
+              - "127.0.0.1:9103"
+
+# Hard ceiling across all body modes, independent of the filter's own
+# max_body_bytes. Requests above it get 413 before any filter runs.
+body_limits:
+  max_request_bytes: 2097152
+
+runtime:
+  threads: 0 # 0 = one worker per logical CPU
+
+shutdown_timeout_secs: 5

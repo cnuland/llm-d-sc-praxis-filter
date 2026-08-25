@@ -1,0 +1,157 @@
+# The Praxis proxy carrying the llm_d_sc filter.
+#
+# Probes (determined by reading the source, not guessed):
+#   Praxis exposes a real HTTP admin listener. docs/operating/health-checking.md
+#   and observability.md document GET /healthy (liveness: 200 once the server is
+#   accepting connections) and GET /ready (readiness: 503 when any cluster has
+#   zero healthy endpoints), and ~/praxis/Containerfile's own HEALTHCHECK hits
+#   http://127.0.0.1:9901/healthy. So these are HTTP probes, not TCP socket probes.
+#
+#   /ready is safe to use here: it only reports 503 for clusters with active
+#   health checks configured, and "clusters without one are always considered
+#   healthy" (health-checking.md). Our config defines no health_check blocks, so
+#   /ready cannot flap because llama-server-ds4 answers 401 without a token.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: praxis
+  labels:
+    app.kubernetes.io/name: praxis
+    app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: praxis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: praxis
+        app.kubernetes.io/part-of: llm-d-sc-praxis-poc
+    spec:
+      # No runAsUser / runAsGroup / fsGroup on purpose. OpenShift's restricted-v2
+      # SCC assigns an arbitrary UID from the namespace's range and GID 0; pinning
+      # a UID here would fight it. The image is built to work with any UID (group
+      # 0 ownership, g=u permissions).
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Praxis does not expand environment variables in its config file, so the
+        # ds4 bearer token cannot come from the ConfigMap directly - and must not,
+        # since a ConfigMap is not a Secret. This renders the template into a
+        # memory-backed volume with the token substituted from the Secret.
+        - name: render-config
+          image: image-registry.openshift-image-registry.svc:5000/praxis-poc/praxis-llm-d-sc:latest
+          imagePullPolicy: Always
+          command: ["/usr/local/bin/render-config.sh"]
+          env:
+            - name: CONFIG_TEMPLATE
+              value: /config-template/praxis.yaml
+            - name: CONFIG_OUT
+              value: /etc/praxis/config.yaml
+            - name: DS4_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ds4-api-key
+                  key: key
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template
+              readOnly: true
+            - name: config-rendered
+              mountPath: /etc/praxis
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      containers:
+        - name: praxis
+          image: image-registry.openshift-image-registry.svc:5000/praxis-poc/praxis-llm-d-sc:latest
+          imagePullPolicy: Always
+          # Explicit rather than relying on the image ENTRYPOINT, which already
+          # carries the same flags: setting only `args` would append a second
+          # `-c` to the entrypoint's.
+          command: ["/usr/local/bin/praxis"]
+          args: ["-c", "/etc/praxis/config.yaml"]
+          env:
+            # Required by the credential_injection config variant, which resolves
+            # the token from the environment at filter construction. Harmless and
+            # unused with the default `headers` config, which gets the token
+            # substituted into the rendered file by the initContainer instead.
+            # Present in both so switching configs needs no Deployment change.
+            - name: DS4_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ds4-api-key
+                  key: key
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 9901
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /healthy
+              port: admin
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthy
+              port: admin
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          volumeMounts:
+            - name: config-rendered
+              mountPath: /etc/praxis
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # Modest: this is a shared homelab, and the proxy is not the workload
+          # under test - the two llama.cpp servers are.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: config-template
+          configMap:
+            name: praxis-config
+        # Memory-backed: the rendered file contains the ds4 credential, so it
+        # never touches a disk.
+        - name: config-rendered
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
