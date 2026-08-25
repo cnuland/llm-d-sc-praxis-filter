@@ -1,0 +1,898 @@
+{
+  "manifest": {
+    "argv": [
+      "/bench/bench/harness.py",
+      "--scenario",
+      "b5c",
+      "--allow-homelab",
+      "--concurrency",
+      "1",
+      "--topology",
+      "in-cluster-job",
+      "--warmup",
+      "0",
+      "--target",
+      "http://praxis.praxis-poc.svc.cluster.local:8080",
+      "--param",
+      "large_url=http://praxis-bench.praxis-poc.svc.cluster.local:8082",
+      "--param",
+      "small_url=http://praxis-bench.praxis-poc.svc.cluster.local:8083",
+      "--param",
+      "probe_url=http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+      "--param",
+      "metrics_url=http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics",
+      "--param",
+      "per_class=10",
+      "--param",
+      "max_tokens=128",
+      "--param",
+      "temperature=0",
+      "--param",
+      "pause_s=30",
+      "--param",
+      "praxis_overhead_p50_ms=0.144833",
+      "--param",
+      "praxis_overhead_p99_ms=0.170873",
+      "--param",
+      "praxis_floor_p50_ms=0.059352",
+      "--param",
+      "praxis_floor_p99_ms=0.151946",
+      "--out",
+      "/bench/bench/results/b5c-incluster.json"
+    ],
+    "b5_payoff_ms": {
+      "p50": {
+        "always_large": 12402.036179,
+        "always_small": 9041.136276,
+        "classified": 8651.044658,
+        "classified_vs_always_large": -3750.991521,
+        "classified_vs_always_small": -390.09161799999856
+      },
+      "p99": {
+        "always_large": 151231.51612,
+        "always_small": 134681.205426,
+        "classified": 205385.266406,
+        "classified_vs_always_large": 54153.750286000024,
+        "classified_vs_always_small": 70704.06098000001
+      }
+    },
+    "command": "/bench/bench/harness.py --scenario b5c --allow-homelab --concurrency 1 --topology in-cluster-job --warmup 0 --target http://praxis.praxis-poc.svc.cluster.local:8080 --param large_url=http://praxis-bench.praxis-poc.svc.cluster.local:8082 --param small_url=http://praxis-bench.praxis-poc.svc.cluster.local:8083 --param probe_url=http://praxis-bench.praxis-poc.svc.cluster.local:8084 --param metrics_url=http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics --param per_class=10 --param max_tokens=128 --param temperature=0 --param pause_s=30 --param praxis_overhead_p50_ms=0.144833 --param praxis_overhead_p99_ms=0.170873 --param praxis_floor_p50_ms=0.059352 --param praxis_floor_p99_ms=0.151946 --out /bench/bench/results/b5c-incluster.json",
+    "concurrency": [
+      1
+    ],
+    "git": {
+      "filter_crate": {
+        "dirty": null,
+        "error": "fatal: not a git repository (or any parent up to mount point /) Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).",
+        "path": "/bench",
+        "sha": null,
+        "untracked": null
+      },
+      "llm_d_sc_genesis": {
+        "dirty": null,
+        "error": "not a directory",
+        "path": "/opt/app-root/src/llm-d-sc-genesis",
+        "sha": null,
+        "untracked": null
+      }
+    },
+    "host": {
+      "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
+      "hostname": "praxis-bench",
+      "logical_cores": 32,
+      "machine": "x86_64",
+      "os": "Linux-6.12.0-142.el10.x86_64-x86_64-with-glibc2.34",
+      "python": "3.11.13",
+      "python_implementation": "CPython"
+    },
+    "leakage_check": {
+      "anchor_count": 138,
+      "clean": true,
+      "comparisons": 17664,
+      "limits": {
+        "content_containment": 0.75,
+        "content_jaccard": 0.6,
+        "full_containment": 0.8,
+        "full_jaccard": 0.6
+      },
+      "max_containment_observed": 0.5,
+      "max_full_containment_observed": 0.7143,
+      "max_full_jaccard_observed": 0.5556,
+      "max_jaccard_observed": 0.3333,
+      "near_duplicates": 0,
+      "verbatim_overlaps": 0
+    },
+    "measured": 300,
+    "notes": [
+      "Concurrency is fixed at 1 and enforced by the harness (SPEC-BENCH \u00a73).",
+      "Generation settings are identical across all arms and recorded in the manifest; different settings between arms would invalidate the comparison entirely.",
+      "All three arms go through Praxis, so the proxy's cost is inside every column rather than only the classified one.",
+      "Arms pause between each other and each one waits for its backend to report itself idle before starting; both backends are single-slot llama.cpp servers on a shared home cluster.",
+      "The classify RTT is still not joinable per request: the filter sets x-llm-d-sc-latency-us on the upstream request and llama.cpp does not echo it back (verified live). It is measured two other ways instead -- a static_response probe arm, and Praxis's own summary -- and upstream_time remains the remainder, labelled as such.",
+      "Warmup is zero by design; a warmup request would seed llm-d-sc's cache for a measured prompt."
+    ],
+    "params": {
+      "large_url": "http://praxis-bench.praxis-poc.svc.cluster.local:8082",
+      "max_tokens": "128",
+      "metrics_url": "http://praxis-bench.praxis-poc.svc.cluster.local:9901/metrics",
+      "pause_s": "30",
+      "per_class": "10",
+      "praxis_floor_p50_ms": "0.059352",
+      "praxis_floor_p99_ms": "0.151946",
+      "praxis_overhead_p50_ms": "0.144833",
+      "praxis_overhead_p99_ms": "0.170873",
+      "probe_url": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+      "small_url": "http://praxis-bench.praxis-poc.svc.cluster.local:8083",
+      "temperature": "0"
+    },
+    "prompts_file": "/bench/bench/prompts/complexity-heldout.json",
+    "prompts_sha256": "93e62ce511cb11adc53c44952c5b9bc1fb41ab54db2c42f6c24510b28fd4aa3e",
+    "records_file": "/bench/bench/results/b5c-incluster.records.jsonl",
+    "run_id": "20260825T003201Z-88",
+    "scenario": "b5c",
+    "scenario_description": "End-to-end payoff against the real models, in-cluster: always-large vs always-small vs classified.",
+    "scenario_spec": "B-5",
+    "target": "http://praxis.praxis-poc.svc.cluster.local:8080",
+    "topology": "in-cluster-job",
+    "unix": 1787623767.6849442,
+    "utc": "2026-08-25T02:09:27Z",
+    "warmup": 0
+  },
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "detail": "captured 40 measured records, expected 40",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 40}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 40}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "0 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=17.2098 p90=18.0274 p95=18.8248 p99=19.8978 max=19.8978",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 40.0 across the probe arm; expected exactly 40. The probe only means `praxis + classify` if every request was classified.",
+          "name": "probe_arm_classified_every_request",
+          "passed": true
+        },
+        {
+          "detail": "every probe response must come from static_response (model b7-static), not from a model endpoint; tally {'b7-static': 1}",
+          "name": "probe_arm_contacted_no_model",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "backend_idle_gate": {},
+        "intended_label_to_model": {
+          "COMPLEX->b7-static": 10,
+          "MEDIUM->b7-static": 10,
+          "REASONING->b7-static": 10,
+          "SIMPLE->b7-static": 10
+        },
+        "praxis_classify_total_delta": 40.0,
+        "praxis_route_delta": {
+          "COMPLEX->large": 6.0,
+          "MEDIUM->small": 15.0,
+          "REASONING->large": 6.0,
+          "SIMPLE->small": 13.0
+        },
+        "responses_by_model": {
+          "b7-static": 40
+        },
+        "time_per_output_token_ms": {
+          "max": 19.89784,
+          "n": 40,
+          "p50": 17.209812,
+          "p90": 18.027431,
+          "p95": 18.824791,
+          "p99": 19.89784
+        },
+        "tokens_generated": 40
+      },
+      "latency_ms": {
+        "max": 19.89784,
+        "n": 40,
+        "p50": 17.209812,
+        "p90": 18.027431,
+        "p95": 18.824791,
+        "p99": 19.89784
+      },
+      "measured_window_s": 0.7502339649945498,
+      "name": "classify-probe",
+      "notes": "praxis + full classification, answered by static_response so no model is contacted. Disjoint class-matched prompts, so neither this arm nor `classified` is served from llm-d-sc's cache because of the other.",
+      "params": {
+        "cache_mode": "n/a",
+        "concurrency": 1,
+        "expected_model": null,
+        "expected_status": [
+          200
+        ],
+        "max_tokens": 128,
+        "measured": 40,
+        "per_class": 10,
+        "prompt_ids": [
+          "hp-complex-011",
+          "hp-complex-012",
+          "hp-complex-013",
+          "hp-complex-014",
+          "hp-complex-015",
+          "hp-complex-016",
+          "hp-complex-017",
+          "hp-complex-018",
+          "hp-complex-019",
+          "hp-complex-020",
+          "hp-medium-011",
+          "hp-medium-012",
+          "hp-medium-013",
+          "hp-medium-014",
+          "hp-medium-015",
+          "hp-medium-016",
+          "hp-medium-017",
+          "hp-medium-018",
+          "hp-medium-019",
+          "hp-medium-020",
+          "hp-reasoning-011",
+          "hp-reasoning-012",
+          "hp-reasoning-013",
+          "hp-reasoning-014",
+          "hp-reasoning-015",
+          "hp-reasoning-016",
+          "hp-reasoning-017",
+          "hp-reasoning-018",
+          "hp-reasoning-019",
+          "hp-reasoning-020",
+          "hp-simple-011",
+          "hp-simple-012",
+          "hp-simple-013",
+          "hp-simple-014",
+          "hp-simple-015",
+          "hp-simple-016",
+          "hp-simple-017",
+          "hp-simple-018",
+          "hp-simple-019",
+          "hp-simple-020"
+        ],
+        "prompts": 40,
+        "stream": false,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8084",
+        "temperature": 0.0,
+        "warmup": 0
+      },
+      "status_counts": {
+        "200": 40
+      },
+      "throughput": 53.31670101111803
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 40 measured records, expected 40",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 40}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 40}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "0 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=12402.0362 p90=42356.5945 p95=76126.4617 p99=151231.5161 max=151231.5161",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "response model tally {'ds4-flash-0731': 40}; this arm exists to measure ds4-flash-0731 alone, so any other id means the arm was mis-wired and its column of the comparison is invalid",
+          "name": "arm_reached_only_its_intended_backend",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 0.0 across this static arm; expected exactly 0. Any movement means the arm was not statically routed and the comparison is not what it claims.",
+          "name": "arm_did_not_classify",
+          "passed": true
+        },
+        {
+          "detail": "ds4-flash-0731 generated 9064 tokens during this arm; this harness asked for 5120 of them, leaving 3944 unaccounted (budget 256, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': True, 'waited_s': 595.0738966464996, 'consecutive_idle_samples': 3}",
+          "name": "backend_served_only_this_arm[ds4-flash-0731]",
+          "passed": false
+        },
+        {
+          "detail": "40/40 responses reported completion_tokens; time-per-output-token is only computable where they did",
+          "name": "generation_accounted",
+          "passed": true
+        },
+        {
+          "detail": "per-arm (max_tokens, temperature, stream): {'always-large': (128, 0.0, False), 'always-small': (128, 0.0, False), 'classified': (128, 0.0, False)}. SPEC-BENCH \u00a71 B-5: different generation settings between arms would invalidate the comparison entirely.",
+          "name": "generation_settings_identical_across_arms",
+          "passed": true
+        },
+        {
+          "detail": "the three compared arms must run the identical prompt list, or the columns are not comparable; 1 distinct prompt lists seen",
+          "name": "same_prompts_across_arms",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "backend_counters": {
+          "ds4-flash-0731": {
+            "harness_completion_tokens": 5120,
+            "harness_prompt_tokens": 877,
+            "prompt_tokens_delta": 17020.0,
+            "tokens_predicted_delta": 9064.0
+          }
+        },
+        "backend_idle_gate": {
+          "ds4-flash-0731": {
+            "consecutive_idle_samples": 3,
+            "gated": true,
+            "waited_s": 595.0738966464996
+          }
+        },
+        "foreign_generation_note": "tokens the backend generated during this arm that this harness did not request. These are single-slot llama.cpp servers on a shared home cluster, so a foreign tenant's generation time lands inside this arm's wall clock rather than beside it.",
+        "foreign_generation_tokens": {
+          "ds4-flash-0731": 3944.0
+        },
+        "intended_label_to_model": {
+          "COMPLEX->ds4-flash-0731": 10,
+          "MEDIUM->ds4-flash-0731": 10,
+          "REASONING->ds4-flash-0731": 10,
+          "SIMPLE->ds4-flash-0731": 10
+        },
+        "praxis_classify_total_delta": 0.0,
+        "praxis_route_delta": {},
+        "responses_by_model": {
+          "ds4-flash-0731": 40
+        },
+        "time_per_output_token_ms": {
+          "max": 1181.4962196875,
+          "n": 40,
+          "p50": 96.8909076484375,
+          "p90": 330.91089425,
+          "p95": 594.737982140625,
+          "p99": 1181.4962196875
+        },
+        "tokens_generated": 5120
+      },
+      "latency_ms": {
+        "max": 151231.51612,
+        "n": 40,
+        "p50": 12402.036179,
+        "p90": 42356.594464,
+        "p95": 76126.461714,
+        "p99": 151231.51612
+      },
+      "measured_window_s": 924.57778298005,
+      "name": "always-large",
+      "notes": "everything to the 284 B model: today's 'just use the big one'",
+      "params": {
+        "cache_mode": "n/a",
+        "concurrency": 1,
+        "expected_model": "ds4-flash-0731",
+        "expected_status": [
+          200
+        ],
+        "max_tokens": 128,
+        "measured": 40,
+        "per_class": 10,
+        "prompt_ids": [
+          "hp-complex-001",
+          "hp-complex-002",
+          "hp-complex-003",
+          "hp-complex-004",
+          "hp-complex-005",
+          "hp-complex-006",
+          "hp-complex-007",
+          "hp-complex-008",
+          "hp-complex-009",
+          "hp-complex-010",
+          "hp-medium-001",
+          "hp-medium-002",
+          "hp-medium-003",
+          "hp-medium-004",
+          "hp-medium-005",
+          "hp-medium-006",
+          "hp-medium-007",
+          "hp-medium-008",
+          "hp-medium-009",
+          "hp-medium-010",
+          "hp-reasoning-001",
+          "hp-reasoning-002",
+          "hp-reasoning-003",
+          "hp-reasoning-004",
+          "hp-reasoning-005",
+          "hp-reasoning-006",
+          "hp-reasoning-007",
+          "hp-reasoning-008",
+          "hp-reasoning-009",
+          "hp-reasoning-010",
+          "hp-simple-001",
+          "hp-simple-002",
+          "hp-simple-003",
+          "hp-simple-004",
+          "hp-simple-005",
+          "hp-simple-006",
+          "hp-simple-007",
+          "hp-simple-008",
+          "hp-simple-009",
+          "hp-simple-010"
+        ],
+        "prompts": 40,
+        "stream": false,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8082",
+        "temperature": 0.0,
+        "warmup": 0
+      },
+      "status_counts": {
+        "200": 40
+      },
+      "throughput": 0.04326299067134636
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 40 measured records, expected 40",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 40}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 40}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "0 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=9041.1363 p90=94168.6652 p95=117289.9545 p99=134681.2054 max=134681.2054",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "response model tally {'qwen38-27b': 40}; this arm exists to measure qwen38-27b alone, so any other id means the arm was mis-wired and its column of the comparison is invalid",
+          "name": "arm_reached_only_its_intended_backend",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 0.0 across this static arm; expected exactly 0. Any movement means the arm was not statically routed and the comparison is not what it claims.",
+          "name": "arm_did_not_classify",
+          "passed": true
+        },
+        {
+          "detail": "qwen38-27b generated 19990 tokens during this arm; this harness asked for 4658 of them, leaving 15332 unaccounted (budget 233, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': False, 'reason': 'still busy after 902 s', 'waited_s': 901.9740536212921, 'last_busy_samples': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}",
+          "name": "backend_served_only_this_arm[qwen38-27b]",
+          "passed": false
+        },
+        {
+          "detail": "40/40 responses reported completion_tokens; time-per-output-token is only computable where they did",
+          "name": "generation_accounted",
+          "passed": true
+        },
+        {
+          "detail": "per-arm (max_tokens, temperature, stream): {'always-large': (128, 0.0, False), 'always-small': (128, 0.0, False), 'classified': (128, 0.0, False)}. SPEC-BENCH \u00a71 B-5: different generation settings between arms would invalidate the comparison entirely.",
+          "name": "generation_settings_identical_across_arms",
+          "passed": true
+        },
+        {
+          "detail": "the three compared arms must run the identical prompt list, or the columns are not comparable; 1 distinct prompt lists seen",
+          "name": "same_prompts_across_arms",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "backend_counters": {
+          "qwen38-27b": {
+            "harness_completion_tokens": 4658,
+            "harness_prompt_tokens": 2809,
+            "prompt_tokens_delta": 39796.0,
+            "tokens_predicted_delta": 19990.0
+          }
+        },
+        "backend_idle_gate": {
+          "qwen38-27b": {
+            "gated": false,
+            "last_busy_samples": [
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "reason": "still busy after 902 s",
+            "waited_s": 901.9740536212921
+          }
+        },
+        "foreign_generation_note": "tokens the backend generated during this arm that this harness did not request. These are single-slot llama.cpp servers on a shared home cluster, so a foreign tenant's generation time lands inside this arm's wall clock rather than beside it.",
+        "foreign_generation_tokens": {
+          "qwen38-27b": 15332.0
+        },
+        "intended_label_to_model": {
+          "COMPLEX->qwen38-27b": 10,
+          "MEDIUM->qwen38-27b": 10,
+          "REASONING->qwen38-27b": 10,
+          "SIMPLE->qwen38-27b": 10
+        },
+        "praxis_classify_total_delta": 0.0,
+        "praxis_route_delta": {},
+        "responses_by_model": {
+          "qwen38-27b": 40
+        },
+        "time_per_output_token_ms": {
+          "max": 1052.196917390625,
+          "n": 40,
+          "p50": 90.70371518867925,
+          "p90": 735.692696625,
+          "p95": 916.327769484375,
+          "p99": 1052.196917390625
+        },
+        "tokens_generated": 4658
+      },
+      "latency_ms": {
+        "max": 134681.205426,
+        "n": 40,
+        "p50": 9041.136276,
+        "p90": 94168.665168,
+        "p95": 117289.954494,
+        "p99": 134681.205426
+      },
+      "measured_window_s": 1302.7115736930864,
+      "name": "always-small",
+      "notes": "everything to the 27 B model: the cheap floor",
+      "params": {
+        "cache_mode": "n/a",
+        "concurrency": 1,
+        "expected_model": "qwen38-27b",
+        "expected_status": [
+          200
+        ],
+        "max_tokens": 128,
+        "measured": 40,
+        "per_class": 10,
+        "prompt_ids": [
+          "hp-complex-001",
+          "hp-complex-002",
+          "hp-complex-003",
+          "hp-complex-004",
+          "hp-complex-005",
+          "hp-complex-006",
+          "hp-complex-007",
+          "hp-complex-008",
+          "hp-complex-009",
+          "hp-complex-010",
+          "hp-medium-001",
+          "hp-medium-002",
+          "hp-medium-003",
+          "hp-medium-004",
+          "hp-medium-005",
+          "hp-medium-006",
+          "hp-medium-007",
+          "hp-medium-008",
+          "hp-medium-009",
+          "hp-medium-010",
+          "hp-reasoning-001",
+          "hp-reasoning-002",
+          "hp-reasoning-003",
+          "hp-reasoning-004",
+          "hp-reasoning-005",
+          "hp-reasoning-006",
+          "hp-reasoning-007",
+          "hp-reasoning-008",
+          "hp-reasoning-009",
+          "hp-reasoning-010",
+          "hp-simple-001",
+          "hp-simple-002",
+          "hp-simple-003",
+          "hp-simple-004",
+          "hp-simple-005",
+          "hp-simple-006",
+          "hp-simple-007",
+          "hp-simple-008",
+          "hp-simple-009",
+          "hp-simple-010"
+        ],
+        "prompts": 40,
+        "stream": false,
+        "target": "http://praxis-bench.praxis-poc.svc.cluster.local:8083",
+        "temperature": 0.0,
+        "warmup": 0
+      },
+      "status_counts": {
+        "200": 40
+      },
+      "throughput": 0.030705185098343066
+    },
+    {
+      "assertions": [
+        {
+          "detail": "captured 40 measured records, expected 40",
+          "name": "sample_count",
+          "passed": true
+        },
+        {
+          "detail": "0 requests errored or returned an unexpected status; budget 0; statuses {'200': 40}",
+          "name": "transport_errors_within_budget",
+          "passed": true
+        },
+        {
+          "detail": "expected [200], saw {'200': 40}",
+          "name": "status_as_expected",
+          "passed": true
+        },
+        {
+          "detail": "0 warmup requests ran in a separate phase and contributed no measured record",
+          "name": "warmup_excluded_from_window",
+          "passed": true
+        },
+        {
+          "detail": "p50=8651.0447 p90=112712.8391 p95=152285.5903 p99=205385.2664 max=205385.2664",
+          "name": "percentiles_monotone",
+          "passed": true
+        },
+        {
+          "detail": "Praxis's llm_d_sc_classify_total moved by 40.0 across this arm; expected exactly 40. The response-header check the local scenarios use is unavailable here: the filter sets provenance on the upstream request and llama.cpp does not echo it.",
+          "name": "classification_observed",
+          "passed": true
+        },
+        {
+          "detail": "40.0 of 40 classifications returned OK. Routing delta: {'SIMPLE->small': 12.0, 'REASONING->large': 8.0, 'COMPLEX->large': 6.0, 'MEDIUM->small': 14.0}",
+          "name": "every_classification_succeeded",
+          "passed": true
+        },
+        {
+          "detail": "response model tally {'qwen38-27b': 26, 'ds4-flash-0731': 14}; the classified arm must reach both backends or it is measuring one of the other two arms under a different name",
+          "name": "traffic_split_across_backends",
+          "passed": true
+        },
+        {
+          "detail": "qwen38-27b generated 11702 tokens during this arm; this harness asked for 2862 of them, leaving 8840 unaccounted (budget 143, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': True, 'waited_s': 6.016313076019287, 'consecutive_idle_samples': 3}",
+          "name": "backend_served_only_this_arm[qwen38-27b]",
+          "passed": false
+        },
+        {
+          "detail": "ds4-flash-0731 generated 3388 tokens during this arm; this harness asked for 1792 of them, leaving 1596 unaccounted (budget 90, 5%). Unaccounted tokens mean another tenant was on the single slot and its generation time landed inside this arm's wall clock. Idle gate before the arm: {'gated': True, 'waited_s': 803.8825881481171, 'consecutive_idle_samples': 3}",
+          "name": "backend_served_only_this_arm[ds4-flash-0731]",
+          "passed": false
+        },
+        {
+          "detail": "40/40 responses reported completion_tokens; time-per-output-token is only computable where they did",
+          "name": "generation_accounted",
+          "passed": true
+        },
+        {
+          "detail": "praxis+classify measured per request by the probe arm: 17.210 ms p50. Independently predicted from Praxis's own classify summary (16.591 ms) plus the B-7 in-cluster floor (0.059 ms): 16.650 ms. Residual 0.560 ms (3.3%, tolerance 15%). upstream_time is the remainder and is flagged measured=false; no per-request join to a classify time exists, because llama.cpp does not echo x-llm-d-sc-latency-us.",
+          "name": "decomposition_components_are_measured_not_inferred",
+          "passed": true
+        },
+        {
+          "detail": "per-arm (max_tokens, temperature, stream): {'always-large': (128, 0.0, False), 'always-small': (128, 0.0, False), 'classified': (128, 0.0, False)}. SPEC-BENCH \u00a71 B-5: different generation settings between arms would invalidate the comparison entirely.",
+          "name": "generation_settings_identical_across_arms",
+          "passed": true
+        },
+        {
+          "detail": "the three compared arms must run the identical prompt list, or the columns are not comparable; 1 distinct prompt lists seen",
+          "name": "same_prompts_across_arms",
+          "passed": true
+        }
+      ],
+      "errors": 0,
+      "extra": {
+        "backend_counters": {
+          "ds4-flash-0731": {
+            "harness_completion_tokens": 1792,
+            "harness_prompt_tokens": 342,
+            "prompt_tokens_delta": 13460.0,
+            "tokens_predicted_delta": 3388.0
+          },
+          "qwen38-27b": {
+            "harness_completion_tokens": 2862,
+            "harness_prompt_tokens": 1793,
+            "prompt_tokens_delta": 42005.0,
+            "tokens_predicted_delta": 11702.0
+          }
+        },
+        "backend_idle_gate": {
+          "ds4-flash-0731": {
+            "consecutive_idle_samples": 3,
+            "gated": true,
+            "waited_s": 803.8825881481171
+          },
+          "qwen38-27b": {
+            "consecutive_idle_samples": 3,
+            "gated": true,
+            "waited_s": 6.016313076019287
+          }
+        },
+        "decomposition": {
+          "p50": {
+            "classify_rtt_praxis_summary_at_arm_end": 16.216921923537118,
+            "classify_rtt_praxis_summary_probe_window": 16.590915065212922,
+            "praxis_floor_incluster": 0.059352,
+            "praxis_overhead_b1": 0.144833,
+            "praxis_plus_classify": 17.209812,
+            "reconciliation": {
+              "measured_praxis_plus_classify": 17.209812,
+              "predicted_praxis_plus_classify": 16.650267065212923,
+              "residual_fraction": 0.03251313464592623,
+              "residual_ms": 0.5595449347870769
+            },
+            "total": 8651.044658,
+            "upstream_measured": false,
+            "upstream_remainder": 8633.834846000002
+          },
+          "p99": {
+            "classify_rtt_praxis_summary_at_arm_end": 16.216921923537118,
+            "classify_rtt_praxis_summary_probe_window": 18.483071528952745,
+            "praxis_floor_incluster": 0.151946,
+            "praxis_overhead_b1": 0.170873,
+            "praxis_plus_classify": 19.89784,
+            "reconciliation": {
+              "measured_praxis_plus_classify": 19.89784,
+              "predicted_praxis_plus_classify": 18.635017528952744,
+              "residual_fraction": 0.06346530432686436,
+              "residual_ms": 1.2628224710472544
+            },
+            "total": 205385.266406,
+            "upstream_measured": false,
+            "upstream_remainder": 205365.36856600002
+          },
+          "per_request_join_available": false,
+          "per_request_join_note": "The filter emits x-llm-d-sc-latency-us on the UPSTREAM request, and llama.cpp does not echo it back (verified live: the response carries no x-llm-d-sc-* header at all). Praxis's built-in access_log records neither the llm_d_sc.* metadata nor a request id -- observed request_id=\"-\" -- so there is no field to join a per-request classify time to a per-request total against the real backends. The probe arm and Praxis's own summary are the honest substitutes, and each is labelled with what it actually is.",
+          "sources": {
+            "classify_rtt_praxis_summary_at_arm_end": "the same metric read at the end of the classified arm. Often absent: that arm issues one request every few seconds, so its classifications age out of the exporter's window before it finishes",
+            "classify_rtt_praxis_summary_probe_window": "measured in-cluster by Praxis itself, read while the probe arm's requests still filled the exporter's rolling window. A window distribution, not a per-request join",
+            "praxis_floor_incluster": "measured: the B-7 control arm in this cluster, supplied as a parameter",
+            "praxis_overhead_b1": "measured: the B-1 baseline arm, local loopback, supplied as a parameter. Reported because SPEC-BENCH names it; not used to reconcile, because it is not an in-cluster figure",
+            "praxis_plus_classify": "measured per request, in-cluster: the classify-probe arm, over a disjoint class-matched slice of the same held-out set",
+            "total": "measured per request, client side, in-cluster",
+            "upstream_remainder": "NOT measured. The remainder, exactly as SPEC-BENCH's own formula defines it"
+          }
+        },
+        "foreign_generation_note": "tokens the backend generated during this arm that this harness did not request. These are single-slot llama.cpp servers on a shared home cluster, so a foreign tenant's generation time lands inside this arm's wall clock rather than beside it.",
+        "foreign_generation_tokens": {
+          "ds4-flash-0731": 1596.0,
+          "qwen38-27b": 8840.0
+        },
+        "intended_label_to_model": {
+          "COMPLEX->ds4-flash-0731": 6,
+          "COMPLEX->qwen38-27b": 4,
+          "MEDIUM->qwen38-27b": 10,
+          "REASONING->ds4-flash-0731": 8,
+          "REASONING->qwen38-27b": 2,
+          "SIMPLE->qwen38-27b": 10
+        },
+        "praxis_classify_total_delta": 40.0,
+        "praxis_route_delta": {
+          "COMPLEX->large": 6.0,
+          "MEDIUM->small": 14.0,
+          "REASONING->large": 8.0,
+          "SIMPLE->small": 12.0
+        },
+        "responses_by_model": {
+          "ds4-flash-0731": 14,
+          "qwen38-27b": 26
+        },
+        "time_per_output_token_ms": {
+          "max": 3366.9715804262296,
+          "n": 40,
+          "p50": 67.9149705625,
+          "p90": 1189.731174546875,
+          "p95": 1847.7514600327868,
+          "p99": 3366.9715804262296
+        },
+        "tokens_generated": 4654
+      },
+      "latency_ms": {
+        "max": 205385.266406,
+        "n": 40,
+        "p50": 8651.044658,
+        "p90": 112712.839062,
+        "p95": 152285.590342,
+        "p99": 205385.266406
+      },
+      "measured_window_s": 1249.4547695639776,
+      "name": "classified",
+      "notes": "llm_d_sc decides: the proposal under test",
+      "params": {
+        "cache_mode": "n/a",
+        "concurrency": 1,
+        "expected_model": null,
+        "expected_status": [
+          200
+        ],
+        "max_tokens": 128,
+        "measured": 40,
+        "per_class": 10,
+        "prompt_ids": [
+          "hp-complex-001",
+          "hp-complex-002",
+          "hp-complex-003",
+          "hp-complex-004",
+          "hp-complex-005",
+          "hp-complex-006",
+          "hp-complex-007",
+          "hp-complex-008",
+          "hp-complex-009",
+          "hp-complex-010",
+          "hp-medium-001",
+          "hp-medium-002",
+          "hp-medium-003",
+          "hp-medium-004",
+          "hp-medium-005",
+          "hp-medium-006",
+          "hp-medium-007",
+          "hp-medium-008",
+          "hp-medium-009",
+          "hp-medium-010",
+          "hp-reasoning-001",
+          "hp-reasoning-002",
+          "hp-reasoning-003",
+          "hp-reasoning-004",
+          "hp-reasoning-005",
+          "hp-reasoning-006",
+          "hp-reasoning-007",
+          "hp-reasoning-008",
+          "hp-reasoning-009",
+          "hp-reasoning-010",
+          "hp-simple-001",
+          "hp-simple-002",
+          "hp-simple-003",
+          "hp-simple-004",
+          "hp-simple-005",
+          "hp-simple-006",
+          "hp-simple-007",
+          "hp-simple-008",
+          "hp-simple-009",
+          "hp-simple-010"
+        ],
+        "prompts": 40,
+        "stream": false,
+        "target": "http://praxis.praxis-poc.svc.cluster.local:8080",
+        "temperature": 0.0,
+        "warmup": 0
+      },
+      "status_counts": {
+        "200": 40
+      },
+      "throughput": 0.03201396399003607
+    }
+  ]
+}
