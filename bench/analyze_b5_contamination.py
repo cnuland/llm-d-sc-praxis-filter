@@ -27,7 +27,7 @@ Usage: python3 analyze_b5_contamination.py [records.jsonl]
 import json
 import sys
 
-CONTAMINATION_THRESHOLD = 0.5  # tokens/sec below 50% of the arm's max = contended
+CONTAMINATION_THRESHOLD = 0.5  # tokens/sec below 50% of the arm's max = LIKELY contended
 
 
 def percentile(sorted_vals, q):
@@ -62,25 +62,38 @@ def main():
     summary = {}
     for arm, reqs in arms.items():
         max_tok_s = max(r["tokens_per_s"] for r in reqs)
-        clean = [r for r in reqs if r["tokens_per_s"] >= CONTAMINATION_THRESHOLD * max_tok_s]
-        contaminated = [r for r in reqs if r not in clean]
+        likely_uncontended = [r for r in reqs if r["tokens_per_s"] >= CONTAMINATION_THRESHOLD * max_tok_s]
+        likely_contended = [r for r in reqs if r not in likely_uncontended]
 
+        # p99 from n<~30 is effectively reporting the maximum, not a percentile.
+        # Report p50/p90/range for the filtered subset; p99 only for the raw
+        # population, which has enough n to make p99 meaningful at all (even
+        # though it is contaminated) -- report it there ONLY as context for how
+        # bad the contamination tail was, never as a latency claim.
         raw_ms = stats([r["wall_s"] * 1000 for r in reqs])
-        clean_ms = stats([r["wall_s"] * 1000 for r in clean])
-        clean_tok_s = stats([r["tokens_per_s"] * 1000 for r in clean])  # scaled x1000 for the shared percentile()
+        sub_vals = sorted(r["wall_s"] * 1000 for r in likely_uncontended)
+        sub_ms = {"n": len(sub_vals), "p50": percentile(sub_vals, 0.50), "p90": percentile(sub_vals, 0.90),
+                  "min": sub_vals[0] if sub_vals else None, "max": sub_vals[-1] if sub_vals else None}
 
-        print("%-14s %6d | p50=%9.0f p99=%9.0f | p50=%9.0f p99=%9.0f | %d/%d (%.0f%%)"
-              % (arm, len(reqs), raw_ms["p50"], raw_ms["p99"], clean_ms["p50"], clean_ms["p99"],
-                 len(contaminated), len(reqs), 100 * len(contaminated) / len(reqs)))
+        print("%-14s %6d | raw p50=%9.0f p99=%9.0f | uncontended(n=%d) p50=%9.0f p90=%9.0f range=[%.0f,%.0f]"
+              % (arm, len(reqs), raw_ms["p50"], raw_ms["p99"], sub_ms["n"], sub_ms["p50"], sub_ms["p90"],
+                 sub_ms["min"] or 0, sub_ms["max"] or 0))
 
         summary[arm] = {
-            "n_total": len(reqs), "n_clean": len(clean), "n_contaminated": len(contaminated),
-            "contamination_rate": len(contaminated) / len(reqs),
+            "original_observations": len(reqs),
+            "likely_uncontended": len(likely_uncontended),
+            "likely_contended": len(likely_contended),
+            "classification_method": "post-hoc token-throughput clustering (heuristic)",
+            "ground_truth_isolation": False,
             "max_observed_tokens_per_s": max_tok_s,
-            "raw_latency_ms": raw_ms,
-            "clean_latency_ms": clean_ms,
-            "clean_tokens_per_s_x1000": clean_tok_s,
-            "contaminated_prompt_ids": [r["meta"]["prompt_id"] for r in contaminated],
+            "raw_latency_ms_all_observations": raw_ms,
+            "likely_uncontended_latency_ms": sub_ms,
+            "note": "p99 is not reported for the likely-uncontended subset: n=%d is too small for a "
+                    "99th-percentile estimate to mean anything beyond 'the maximum observation'. "
+                    "This is a HEURISTIC classification, not ground-truth per-request attribution -- "
+                    "see B-5R for the rigorous replacement (llama.cpp metrics snapshot before/after "
+                    "each request, reconciled against response usage)." % len(likely_uncontended),
+            "likely_contended_prompt_ids": [r["meta"]["prompt_id"] for r in likely_contended],
         }
 
     print("\nContamination threshold: tokens/sec < %.0f%% of the arm's own fastest observed request."

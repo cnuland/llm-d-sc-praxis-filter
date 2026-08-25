@@ -1,20 +1,9 @@
 {
   "always-large": {
-    "clean_latency_ms": {
-      "max": 12701.62457,
-      "n": 31,
-      "p50": 12231.894957,
-      "p90": 12496.671647,
-      "p99": 12701.62457
-    },
-    "clean_tokens_per_s_x1000": {
-      "max": 16434.513870720977,
-      "n": 31,
-      "p50": 10464.44565212268,
-      "p90": 11609.118319004194,
-      "p99": 16434.513870720977
-    },
-    "contaminated_prompt_ids": [
+    "classification_method": "post-hoc token-throughput clustering (heuristic)",
+    "ground_truth_isolation": false,
+    "likely_contended": 9,
+    "likely_contended_prompt_ids": [
       "hp-complex-004",
       "hp-complex-005",
       "hp-complex-006",
@@ -25,12 +14,18 @@
       "hp-medium-001",
       "hp-simple-010"
     ],
-    "contamination_rate": 0.225,
+    "likely_uncontended": 31,
+    "likely_uncontended_latency_ms": {
+      "max": 12701.62457,
+      "min": 7788.487144000001,
+      "n": 31,
+      "p50": 12231.894957,
+      "p90": 12496.671647
+    },
     "max_observed_tokens_per_s": 16.434513870720977,
-    "n_clean": 31,
-    "n_contaminated": 9,
-    "n_total": 40,
-    "raw_latency_ms": {
+    "note": "p99 is not reported for the likely-uncontended subset: n=31 is too small for a 99th-percentile estimate to mean anything beyond 'the maximum observation'. This is a HEURISTIC classification, not ground-truth per-request attribution -- see B-5R for the rigorous replacement (llama.cpp metrics snapshot before/after each request, reconciled against response usage).",
+    "original_observations": 40,
+    "raw_latency_ms_all_observations": {
       "max": 151231.51612000001,
       "n": 40,
       "p50": 12414.467087,
@@ -39,21 +34,10 @@
     }
   },
   "always-small": {
-    "clean_latency_ms": {
-      "max": 9041.136276,
-      "n": 20,
-      "p50": 7634.6856530000005,
-      "p90": 8357.414684,
-      "p99": 9041.136276
-    },
-    "clean_tokens_per_s_x1000": {
-      "max": 19181.88755966939,
-      "n": 20,
-      "p50": 15982.098345992574,
-      "p90": 17937.95847016692,
-      "p99": 19181.88755966939
-    },
-    "contaminated_prompt_ids": [
+    "classification_method": "post-hoc token-throughput clustering (heuristic)",
+    "ground_truth_isolation": false,
+    "likely_contended": 20,
+    "likely_contended_prompt_ids": [
       "hp-complex-001",
       "hp-complex-002",
       "hp-complex-003",
@@ -75,12 +59,18 @@
       "hp-reasoning-007",
       "hp-reasoning-008"
     ],
-    "contamination_rate": 0.5,
+    "likely_uncontended": 20,
+    "likely_uncontended_latency_ms": {
+      "max": 9041.136276,
+      "min": 3929.679052,
+      "n": 20,
+      "p50": 7634.6856530000005,
+      "p90": 8357.414684
+    },
     "max_observed_tokens_per_s": 19.18188755966939,
-    "n_clean": 20,
-    "n_contaminated": 20,
-    "n_total": 40,
-    "raw_latency_ms": {
+    "note": "p99 is not reported for the likely-uncontended subset: n=20 is too small for a 99th-percentile estimate to mean anything beyond 'the maximum observation'. This is a HEURISTIC classification, not ground-truth per-request attribution -- see B-5R for the rigorous replacement (llama.cpp metrics snapshot before/after each request, reconciled against response usage).",
+    "original_observations": 40,
+    "raw_latency_ms_all_observations": {
       "max": 134681.205426,
       "n": 40,
       "p50": 20670.191738,
@@ -89,21 +79,10 @@
     }
   },
   "classified": {
-    "clean_latency_ms": {
-      "max": 12722.455849999998,
-      "n": 28,
-      "p50": 7838.051428,
-      "p90": 12576.083670999999,
-      "p99": 12722.455849999998
-    },
-    "clean_tokens_per_s_x1000": {
-      "max": 19245.09186704969,
-      "n": 28,
-      "p50": 15440.643189285389,
-      "p90": 18300.350550534935,
-      "p99": 19245.09186704969
-    },
-    "contaminated_prompt_ids": [
+    "classification_method": "post-hoc token-throughput clustering (heuristic)",
+    "ground_truth_isolation": false,
+    "likely_contended": 12,
+    "likely_contended_prompt_ids": [
       "hp-complex-007",
       "hp-complex-009",
       "hp-complex-010",
@@ -117,12 +96,18 @@
       "hp-simple-006",
       "hp-simple-007"
     ],
-    "contamination_rate": 0.3,
+    "likely_uncontended": 28,
+    "likely_uncontended_latency_ms": {
+      "max": 12722.455849999998,
+      "min": 3972.618767,
+      "n": 28,
+      "p50": 7838.051428,
+      "p90": 12576.083670999999
+    },
     "max_observed_tokens_per_s": 19.24509186704969,
-    "n_clean": 28,
-    "n_contaminated": 12,
-    "n_total": 40,
-    "raw_latency_ms": {
+    "note": "p99 is not reported for the likely-uncontended subset: n=28 is too small for a 99th-percentile estimate to mean anything beyond 'the maximum observation'. This is a HEURISTIC classification, not ground-truth per-request attribution -- see B-5R for the rigorous replacement (llama.cpp metrics snapshot before/after each request, reconciled against response usage).",
+    "original_observations": 40,
+    "raw_latency_ms_all_observations": {
       "max": 205385.266406,
       "n": 40,
       "p50": 8689.335354,

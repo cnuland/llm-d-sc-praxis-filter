@@ -156,6 +156,16 @@ def chat_payload(prompt_text, model):
 
 
 def generate_one(prompt, backend):
+    """One generation call. `wall_s` is retained for audit only -- this
+    experiment answers a QUALITY question (does the response meet the bar),
+    not a performance one, and a shared homelab backend means wall_s here is
+    NOT a controlled latency measurement. Never derive a percentile or a
+    latency claim from generation records; that is what B-5 / B-5R measure,
+    with an idle gate and (for B-5R) per-request ground-truth reconciliation
+    against the backend's own token counters. A slow generation here still
+    produces a complete response that gets judged like any other -- quality
+    and performance are deliberately decoupled, per SPEC-AFFINITY.
+    """
     url = LARGE_URL if backend == "large" else SMALL_URL
     model = LARGE_MODEL if backend == "large" else SMALL_MODEL
     bearer = ds4_token() if backend == "large" else None
@@ -164,7 +174,7 @@ def generate_one(prompt, backend):
         "_key": "%s:%s" % (prompt["id"], backend),
         "prompt_id": prompt["id"],
         "backend": backend,
-        "wall_s": round(wall_s, 3),
+        "wall_s": round(wall_s, 3),  # audit-only; see docstring above
         "status": status,
         "error": err,
     }

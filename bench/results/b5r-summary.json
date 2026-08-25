@@ -1,0 +1,32 @@
+{
+  "always-large": {
+    "ground_truth_isolation": true,
+    "isolated_latency_ms": {
+      "p50": 8395.0,
+      "p90": 9257.0
+    },
+    "isolated_n": 40,
+    "method": "per-request llama.cpp metrics snapshot (T0/T1) reconciled against response usage",
+    "shared_load_n": 7
+  },
+  "always-small": {
+    "ground_truth_isolation": true,
+    "isolated_latency_ms": {
+      "p50": 8036.0,
+      "p90": 10397.0
+    },
+    "isolated_n": 40,
+    "method": "per-request llama.cpp metrics snapshot (T0/T1) reconciled against response usage",
+    "shared_load_n": 0
+  },
+  "classified": {
+    "ground_truth_isolation": true,
+    "isolated_latency_ms": {
+      "p50": 7132.0,
+      "p90": 8991.0
+    },
+    "isolated_n": 40,
+    "method": "per-request llama.cpp metrics snapshot (T0/T1) reconciled against response usage",
+    "shared_load_n": 0
+  }
+}
