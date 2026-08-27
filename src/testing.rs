@@ -104,6 +104,7 @@ impl ContextHarness {
             metrics_route: None,
             peer_identity: None,
             subrequest_client: None,
+            subrequest_response_mode: Default::default(),
             request: &self.request,
             request_body_bytes: 0,
             request_body_mode: BodyMode::Stream,
@@ -114,8 +115,16 @@ impl ContextHarness {
             response_headers_modified: false,
             rewritten_path: None,
             selected_endpoint_index: None,
+            attempted_endpoints: vec![],
+            retry_policy: None,
+            route_retry_policy: None,
+            cluster_retry_state: None,
+            cluster_retry_state_released: false,
+            endpoint_reselector: None,
+            pinned_endpoint_address: None,
             time_source: &self.time_source,
             upstream: None,
+            session_stores: None,
         }
     }
 }
