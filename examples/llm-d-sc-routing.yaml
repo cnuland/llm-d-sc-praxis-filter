@@ -39,6 +39,9 @@
 #   # A classifier outage degrades routing quality; it does not take the
 #   # gateway down.
 
+insecure_options:
+  allow_private_endpoints: true
+
 listeners:
   - name: ai-gateway
     address: "127.0.0.1:8080"

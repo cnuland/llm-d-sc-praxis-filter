@@ -278,10 +278,7 @@ fn t_u9_unconfigured_label_collapses_to_the_sentinel() {
     let f = filter("");
     // A taxonomy the operator never configured — exactly what a classifier
     // upgrade, a misconfiguration, or a compromise would produce.
-    let d = f.decide(Ok(response(
-        ClassificationStatus::Ok,
-        &[("SOME_BRAND_NEW_LABEL", 0.9)],
-    )));
+    let d = f.decide(Ok(response(ClassificationStatus::Ok, &[("SOME_BRAND_NEW_LABEL", 0.9)])));
     assert_eq!(
         f.metric_label(&d),
         "<unmapped>",
