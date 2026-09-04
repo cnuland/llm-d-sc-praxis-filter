@@ -142,9 +142,26 @@ Upstream request headers when `emit_headers: true`: `x-llm-d-sc-label`,
 `x-llm-d-sc-score`, `x-llm-d-sc-classifier`, `x-llm-d-sc-taxonomy-revision`,
 `x-llm-d-sc-status`.
 
-Metrics: `llm_d_sc_classify_total{status}`, `llm_d_sc_classify_duration_seconds`,
-`llm_d_sc_route_total{label,cluster}`. All label values come from config or a
-fixed enum, so cardinality is bounded.
+Metrics: `llm_d_sc_classify_attempt_total`,
+`llm_d_sc_classify_total{status}`,
+`llm_d_sc_classify_duration_seconds`,
+`llm_d_sc_fallback_total{status}`, and
+`llm_d_sc_route_total{label,cluster}`. The attempt counter increments only
+when a classify RPC is started; `classify_total` also includes
+`SKIPPED_NO_PROMPT`. The duration histogram measures only attempted RPCs.
+`fallback_total` counts only fail-open fallback decisions; rejected
+fail-closed decisions are not included. All label values come from fixed
+enums or the configured route table, so cardinality is bounded and counters
+can be summed across replicas.
+
+For a bounded benchmark window, use counter increases rather than absolute
+values, for example:
+
+```promql
+sum(increase(llm_d_sc_classify_attempt_total[30s]))
+sum by (status) (increase(llm_d_sc_classify_total[30s]))
+sum by (status) (increase(llm_d_sc_fallback_total[30s]))
+```
 
 **Security.** Client-supplied `x-llm-d-sc-*` headers are removed on *every* path
 — including skip, timeout and reject — so a caller can never forge provenance or
