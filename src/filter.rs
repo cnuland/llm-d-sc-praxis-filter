@@ -376,6 +376,10 @@ impl LlmDScFilter {
         }
 
         metrics::record_classify(decision.status, elapsed.map(|e| e.as_secs_f64()));
+        metrics::record_fallback(
+            decision.status,
+            decision.status != status::OK && matches!(&decision.route, Route::Cluster(_)),
+        );
 
         let action = match &decision.route {
             Route::Cluster(cluster) => {
@@ -505,6 +509,7 @@ impl HttpFilter for LlmDScFilter {
         // Steps 3-4.
         let request = self.build_request(self.request_id(ctx), &prompt);
         let started = Instant::now();
+        metrics::record_attempt();
         let outcome = self.channel.classify(request, self.timeout).await;
         let elapsed = started.elapsed();
 

@@ -12,8 +12,20 @@
 //! The per-request `x-llm-d-sc-label` header still carries the true label,
 //! because a header is per-request and creates no time series.
 
-/// Counter: classify attempts, labelled by outcome status.
+/// Counter: request-level classification outcomes, labelled by status.
+///
+/// This includes `SKIPPED_NO_PROMPT`; use [`CLASSIFY_ATTEMPT_TOTAL`] for the
+/// number of classifier RPCs actually started.
 pub const CLASSIFY_TOTAL: &str = "llm_d_sc_classify_total";
+
+/// Counter: classify RPCs started by this filter.
+///
+/// Unlike [`CLASSIFY_TOTAL`], this excludes requests for which no prompt was
+/// found and therefore no classifier RPC was attempted.
+pub const CLASSIFY_ATTEMPT_TOTAL: &str = "llm_d_sc_classify_attempt_total";
+
+/// Counter: fail-open fallback decisions, labelled by outcome status.
+pub const FALLBACK_TOTAL: &str = "llm_d_sc_fallback_total";
 
 /// Histogram: wall-clock seconds spent in the classify RPC.
 pub const CLASSIFY_DURATION_SECONDS: &str = "llm_d_sc_classify_duration_seconds";
@@ -36,6 +48,22 @@ pub fn record_classify(status: &'static str, seconds: Option<f64>) {
     ::metrics::counter!(CLASSIFY_TOTAL, "status" => status).increment(1);
     if let Some(seconds) = seconds {
         ::metrics::histogram!(CLASSIFY_DURATION_SECONDS).record(seconds);
+    }
+}
+
+/// Record that a classify RPC was started.
+pub fn record_attempt() {
+    ::metrics::counter!(CLASSIFY_ATTEMPT_TOTAL).increment(1);
+}
+
+/// Record one fail-open fallback decision.
+///
+/// Rejected decisions must pass `fail_open = false` and are intentionally not
+/// emitted here. Keeping that guard at the metric boundary prevents callers
+/// from accidentally counting fail-closed outcomes as fallbacks.
+pub fn record_fallback(status: &'static str, fail_open: bool) {
+    if fail_open {
+        ::metrics::counter!(FALLBACK_TOTAL, "status" => status).increment(1);
     }
 }
 

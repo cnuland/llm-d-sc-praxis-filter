@@ -27,6 +27,10 @@ admin:
 
 insecure_options:
   allow_public_admin: true
+  # The example targets private homelab DNS endpoints. This explicit exception
+  # is required by the image's `praxis --validate` build-time check and must be
+  # reviewed before reusing this configuration outside the homelab.
+  allow_private_endpoints: true
 
 listeners:
   - name: http

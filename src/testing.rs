@@ -16,7 +16,7 @@ use std::{
 };
 
 use praxis_core::{id::IdGenerator, time::SystemTimeSource};
-use praxis_filter::{BodyMode, HttpFilterContext, Request, RequestExtensions};
+use praxis_filter::{BodyMode, HttpFilterContext, Request, RequestExtensions, SubRequestResponseMode};
 
 use crate::pb::{
     ClassifyRequest, ClassifyResponse,
@@ -103,7 +103,9 @@ impl ContextHarness {
             kv_stores: None,
             metrics_route: None,
             peer_identity: None,
+            session_stores: None,
             subrequest_client: None,
+            subrequest_response_mode: SubRequestResponseMode::Buffered,
             request: &self.request,
             request_body_bytes: 0,
             request_body_mode: BodyMode::Stream,
@@ -112,6 +114,13 @@ impl ContextHarness {
             response_body_mode: BodyMode::Stream,
             response_header: None,
             response_headers_modified: false,
+            attempted_endpoints: Vec::new(),
+            retry_policy: None,
+            route_retry_policy: None,
+            cluster_retry_state: None,
+            cluster_retry_state_released: false,
+            endpoint_reselector: None,
+            pinned_endpoint_address: None,
             rewritten_path: None,
             selected_endpoint_index: None,
             time_source: &self.time_source,
