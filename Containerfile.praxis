@@ -54,56 +54,24 @@ WORKDIR /src
 COPY praxis/                  /src/praxis/
 COPY llm-d-sc-praxis-filter/  /src/llm-d-sc-praxis-filter/
 
-# --- Wire the filter crate into the Praxis server -----------------------------
+# --- Use the staged Praxis workspace for the filter dependencies ---------------
 #
-# SPEC 5 (Phase A): the entire Praxis-side change is ONE line in server/Cargo.toml.
-# The server's build.rs then discovers the crate through `cargo metadata` by its
-# [package.metadata.praxis-filters] marker and registers it at startup.
-#
-# The crate's Cargo.toml carries absolute host path dependencies
-# (/Users/cnuland/praxis/...), which obviously do not exist in the image, so they
-# are rewritten to the staged location first. Staging keeps the two trees as
-# siblings, so a relative "../praxis/..." path dependency resolves correctly too
-# and this rewrite is simply a no-op in that case.
-# The wiring is IDEMPOTENT. The praxis tree may arrive already wired (it
-# currently does, via a relative `path = "../../llm-d-sc-praxis-filter"`), and
-# because staging places the two trees as siblings that relative path resolves to
-# /src/llm-d-sc-praxis-filter here exactly as it does on the laptop. Inserting a
-# second entry would be a duplicate key in [dependencies] and a hard cargo error,
-# so an existing entry is left strictly alone and only an unwired tree is patched.
-#
-# The insertion uses awk rather than `sed -i 's/.../\n.../'`: a newline in a sed
-# replacement is a GNU extension that busybox sed (what alpine ships) handles
-# inconsistently, whereas this awk is byte-identical under busybox, mawk and gawk.
+# Keep this image-only: the source manifests remain unchanged in the repository.
+# The append is idempotent because an existing workspace patch is left alone.
 RUN set -e; \
-    sed -i 's#/Users/cnuland/praxis#/src/praxis#g' /src/llm-d-sc-praxis-filter/Cargo.toml; \
-    if grep -q '^llm-d-sc-praxis-filter[[:space:]]*=' /src/praxis/server/Cargo.toml; then \
-      echo "server/Cargo.toml is already wired; leaving it untouched"; \
-    else \
-      awk '/^\[dependencies\]$/ { \
-             print; \
-             print "llm-d-sc-praxis-filter = { path = \"/src/llm-d-sc-praxis-filter\" }"; \
-             next \
-           } \
-           { print }' \
-        /src/praxis/server/Cargo.toml > /tmp/server-Cargo.toml; \
-      mv /tmp/server-Cargo.toml /src/praxis/server/Cargo.toml; \
-      echo "wired the filter crate into server/Cargo.toml"; \
+    if ! grep -q '^\[patch\."https://github\.com/praxis-proxy/praxis"\]$' /src/praxis/Cargo.toml; then \
+      printf '%s\n' '' '[patch."https://github.com/praxis-proxy/praxis"]' \
+        'praxis-proxy-core = { path = "core" }' \
+        'praxis-proxy-filter = { path = "filter" }' \
+        >> /src/praxis/Cargo.toml; \
     fi
 
-# Fail loudly if the wiring is missing or duplicated, and if any host absolute
-# path survived. A silently unwired build would produce a perfectly healthy
-# Praxis binary with no llm_d_sc filter in it, and the failure would only surface
-# later as an inscrutable config error at pod startup.
+RUN grep -q '^\[patch\."https://github\.com/praxis-proxy/praxis"\]$' /src/praxis/Cargo.toml
+
 RUN set -e; \
-    n=$(grep -c '^llm-d-sc-praxis-filter[[:space:]]*=' /src/praxis/server/Cargo.toml || true); \
-    if [ "$n" -ne 1 ]; then \
-      echo "FATAL: expected exactly 1 filter dependency in server/Cargo.toml, found $n" >&2; exit 1; \
-    fi; \
-    if grep -q '/Users/cnuland' /src/llm-d-sc-praxis-filter/Cargo.toml; then \
-      echo "FATAL: host absolute paths remain in the filter crate Cargo.toml" >&2; exit 1; \
-    fi; \
-    echo "OK: filter crate wired into server/Cargo.toml exactly once"
+    if ! grep -q '^llm-d-sc-praxis-filter[[:space:]]*=' /src/praxis/server/Cargo.toml; then \
+      sed -i '/^\[dependencies\]$/a llm-d-sc-praxis-filter = { path = "/src/llm-d-sc-praxis-filter" }' /src/praxis/server/Cargo.toml; \
+    fi
 
 WORKDIR /src/praxis
 
